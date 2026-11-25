@@ -66,7 +66,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 
   <section class="panel" id="forecast"><div class="card"><h3>24時間・環境指標とマズメ時間帯</h3><div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:#42d4d8"></i>環境指標（0〜100）</span><span class="legend-item"><i class="legend-dot" style="background:#e9ad54"></i>朝マズメ目安</span><span class="legend-item"><i class="legend-dot" style="background:#d88b48"></i>夕マズメ目安</span></div><canvas class="chart" id="hourChart"></canvas><p class="small">金色の帯は日の出・日の入りの目安。マズメ時間帯は現時点では加点していないよ。魚種別に取得できた季節・水温・風・波・降水要因を使って計算する。潮位の線は公式な毎時潮位データの接続後に追加するね。</p><div id="hourList"></div></div></section>
 
-  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><div id="speciesEvaluation" class="data-box">魚種別の評価内訳はデータ取得後に表示するよ。</div><p class="small">魚種ごとに、根拠のある季節・水温情報だけを参考 proxy として使うよ。季節スコアは生態・漁獲時期の資料に基づく目安で、釣果確率ではないよ。水温帯は福岡県の定置網調査で確認された漁獲水温帯（ブリ19〜22℃、サワラ19〜23℃、アオリイカ18〜24℃）を近隣海域の参考値として使い、今治の最適水温とは扱わない。カサゴ・マダイ・ヒラメは魚種別の水温スコアを無理に付けないよ。風・波・雨は魚の活性ではなく釣りやすさの評価。ベイト・釣り場別潮流は未取得、マズメは加点しない。数値は暫定 proxy で今治の岸釣りで検証されていないよ。<br>参考資料：<a class="source-link" href="https://www.sea-net.pref.fukuoka.jp/info/kenkyu/upLoad/k10-18.pdf" target="_blank" rel="noopener">福岡県・水温変動と定置網漁業</a> ／ <a class="source-link" href="https://www.pref.ehime.jp/fishpower-ehime/library/madai.html" target="_blank" rel="noopener">愛媛県・マダイの生態</a> ／ <a class="source-link" href="https://www.pref.tokushima.lg.jp/file/attachment/58352.pdf" target="_blank" rel="noopener">徳島県・アオリイカの生活史</a> ／ <a class="source-link" href="https://abchan.fra.go.jp/wpt/wp-content/uploads/2024/03/details_2023_48.pdf" target="_blank" rel="noopener">水産研究・教育機構・瀬戸内海東部マダイ</a> ／ <a class="source-link" href="https://www.pref.kagawa.lg.jp/documents/31929/11-1.pdf" target="_blank" rel="noopener">香川県・燧灘東部ヒラメの産卵期</a></p></div></section>
+  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><div id="speciesEvaluation" class="data-box">魚種別の評価内訳はデータ取得後に表示するよ。</div><p class="small">6魚種をそれぞれ独立した生態プロファイルで評価するよ。青物・サワラ・アオリイカ・カサゴ・マダイ・ヒラメで、季節性・水温資料の有無と評価への反映を個別に設定。サワラだけを基準にした共通モデルではないよ。季節スコアは生活史・回遊時期の参考値で、釣果確率ではない。水温帯は福岡県の定置網調査で確認されたブリ19〜22℃、サワラ19〜23℃、アオリイカ18〜24℃の漁獲水温帯を近隣海域の参考値として使用し、今治の最適水温とは扱わない。カサゴ・マダイ・ヒラメは根拠のある今治沿岸向け水温応答が不足しているため、水温加点をしない。風・波・雨は魚の活性ではなく釣りやすさの評価。ベイト・釣り場別潮流は未取得、マズメは加点しない。数値は暫定 proxy で今治の岸釣りで検証されていないよ。<br>参考資料：<a class="source-link" href="https://www.sea-net.pref.fukuoka.jp/info/kenkyu/upLoad/k10-18.pdf" target="_blank" rel="noopener">福岡県・水温変動と定置網漁業</a> ／ <a class="source-link" href="https://www.pref.ehime.jp/fishpower-ehime/library/madai.html" target="_blank" rel="noopener">愛媛県・マダイの生態</a> ／ <a class="source-link" href="https://www.pref.tokushima.lg.jp/file/attachment/58352.pdf" target="_blank" rel="noopener">徳島県・アオリイカの生活史</a> ／ <a class="source-link" href="https://abchan.fra.go.jp/wpt/wp-content/uploads/2024/03/details_2023_48.pdf" target="_blank" rel="noopener">水産研究・教育機構・瀬戸内海東部マダイ</a> ／ <a class="source-link" href="https://www.pref.kagawa.lg.jp/documents/31929/11-1.pdf" target="_blank" rel="noopener">香川県・燧灘東部ヒラメの産卵期</a></p></div></section>
 
   <section class="panel" id="tide"><div class="two">
 <div class="card"><h3>海洋コンディション</h3><div id="marineDetails" class="small">海洋データ取得中</div>
@@ -102,13 +102,34 @@ function weatherScore(w){let s=50;let wind=w.wind_speed_10m??10;let temp=w.tempe
 s+=wind<=4?12:wind<=7?6:wind<=10?0:wind<=14?-12:-25;
 s+=rain<0.2?5:rain<1?-2:-12;s+=temp>=12&&temp<=24?8:temp<5||temp>30?-8:2;s+=pressure>=1005&&pressure<=1025?4:-3;
 return Math.max(0,Math.min(100,Math.round(s)))}
-const fishProfiles={"青物":{season:false,temp:"buri",sw:0,tw:.25,ww:.30,wav:.30,rw:.15},"サワラ":{season:true,temp:"sawara",sw:.25,tw:.25,ww:.25,wav:.15,rw:.10},"アオリイカ":{season:true,temp:"aori",sw:.25,tw:.25,ww:.25,wav:.15,rw:.10},"カサゴ":{season:false,temp:null,sw:0,tw:0,ww:.35,wav:.40,rw:.25},"マダイ":{season:true,temp:null,sw:.15,tw:0,ww:.35,wav:.30,rw:.20},"ヒラメ":{season:true,temp:null,sw:.15,tw:0,ww:.35,wav:.30,rw:.20}};
-function seasonalScore(target,date){const m=date.getMonth()+1;const monthly={ "サワラ":[30,30,45,85,85,70,55,50,70,75,55,35], "アオリイカ":[40,40,45,55,60,65,65,65,70,85,85,80], "マダイ":[55,55,55,65,65,65,55,55,65,65,65,60], "ヒラメ":[55,55,65,65,65,65,55,55,55,55,55,55] };return monthly[target]?monthly[target][m-1]:null;}
+// 各魚種を独立した生態プロファイルで評価。季節値は生活史・回遊時期の参考値で、釣果確率ではない。
+const fishProfiles={
+ "青物":{season:false,temp:"buri",sw:0,tw:.30,ww:.28,wav:.27,rw:.15,seasonNote:"今治沿岸のブリ・ハマチ岸釣りに適用できる月別回遊資料が不足"},
+ "サワラ":{season:true,temp:"sawara",sw:.25,tw:.25,ww:.22,wav:.18,rw:.10,seasonNote:"瀬戸内海系群の春季来遊・産卵と秋季移出を反映"},
+ "アオリイカ":{season:true,temp:"aori",sw:.25,tw:.25,ww:.22,wav:.18,rw:.10,seasonNote:"沿岸藻場での春〜夏の産卵と秋の新子期を反映"},
+ "カサゴ":{season:false,temp:null,sw:0,tw:0,ww:.32,wav:.43,rw:.25,seasonNote:"今治沿岸での月別岸釣り適期を裏付ける資料が不足"},
+ "マダイ":{season:true,temp:null,sw:.20,tw:0,ww:.32,wav:.28,rw:.20,seasonNote:"瀬戸内海中央部の春〜初夏の産卵期を反映"},
+ "ヒラメ":{season:true,temp:null,sw:.20,tw:0,ww:.32,wav:.28,rw:.20,seasonNote:"燧灘東部の春季産卵期を反映"}
+};
+function seasonalScore(target,date){const m=date.getMonth()+1;
+ if(target==="サワラ"){if(m>=4&&m<=6)return 85;if(m>=9&&m<=11)return 65;return 35;}
+ if(target==="アオリイカ"){if(m>=4&&m<=9)return 75;if(m>=10&&m<=12)return 85;return 45;}
+ if(target==="マダイ"){if(m>=4&&m<=6)return 80;return 55;}
+ if(target==="ヒラメ"){if(m>=3&&m<=6)return 80;return 55;}
+ return null;
+}
 function temperatureScore(kind,t){if(!Number.isFinite(t))return null;const ranges={buri:[19,22],sawara:[19,23],aori:[18,24]};const r=ranges[kind];if(!r)return null;const [lo,hi]=r;if(t>=lo&&t<=hi)return 85;if(t>=lo-2&&t<lo||t>hi&&t<=hi+2)return 65;if(t>=lo-4&&t<lo-2||t>hi+2&&t<=hi+4)return 45;return 25;}
 function windConditionScore(v){if(!Number.isFinite(v))return null;return v<=4?95:v<=7?80:v<=10?60:v<=14?35:10;}
 function waveConditionScore(v){if(!Number.isFinite(v))return null;return v<.5?95:v<1?80:v<1.5?60:v<2?35:10;}
 function rainConditionScore(v){if(!Number.isFinite(v))return null;return v<.2?95:v<1?70:25;}
-function evaluateFish(w,mp,date,target){const p=fishProfiles[target],parts=[],missing=[];const add=(name,value,weight,detail)=>{if(Number.isFinite(value)&&weight>0)parts.push({name,value,weight,detail});else if(detail)missing.push(name+"（"+detail+"）");};if(p.season)add("季節",seasonalScore(target,date),p.sw,"瀬戸内海・近隣海域の生活史／来遊資料を使った季節 proxy（釣果確率ではない）");else missing.push("季節（今治沿岸で使える魚種別の季節資料が不足）");if(p.temp){const t=mp&&mp.sea_surface_temperature;add("海水温",temperatureScore(p.temp,t),p.tw,Number.isFinite(t)?"近隣海域の漁獲水温帯を参考にしたモデル水温 proxy":"海面水温モデル値を取得できず");}else missing.push("海水温（魚種別の参考水温資料が不足し、数値評価から除外）");add("風",windConditionScore(w.wind_speed_10m),p.ww,Number.isFinite(w.wind_speed_10m)?"風速予報による釣りやすさ":"風速データ未取得");add("波",waveConditionScore(mp&&mp.wave_height),p.wav,Number.isFinite(mp&&mp.wave_height)?"波高モデルによる釣りやすさ":"波高モデル値を取得できず");add("降水",rainConditionScore(w.precipitation),p.rw,Number.isFinite(w.precipitation)?"降水予報による釣りやすさ":"降水データ未取得");missing.push("ベイト（釣り場別の魚群・ベイト観測データを取得できず）","潮流（釣り場別の潮汐流速・流向を取得できず。沖合海流モデルとは別物）","マズメ（魚種別・地域別の釣果検証が不足しているため加点なし）");const weight=parts.reduce((s,x)=>s+x.weight,0),score=weight?Math.round(parts.reduce((s,x)=>s+x.value*x.weight,0)/weight):null;return {score,parts,missing};}
+function evaluateFish(w,mp,date,target){const p=fishProfiles[target],parts=[],missing=[];const add=(name,value,weight,detail)=>{if(Number.isFinite(value)&&weight>0)parts.push({name,value,weight,detail});else if(detail)missing.push(name+"（"+detail+"）");};
+ if(p.season){const ss=seasonalScore(target,date);add("季節",ss,p.sw,p.seasonNote+"。生態上の季節目安であり釣れやすさの実測値ではない");}else missing.push("季節（"+p.seasonNote+"）");
+ if(p.temp){const t=mp&&mp.sea_surface_temperature;add("海水温",temperatureScore(p.temp,t),p.tw,Number.isFinite(t)?"近隣海域の漁獲水温帯を参照した海面水温モデル値。今治の適水温ではない":"海面水温モデル値を取得できず");}else missing.push("海水温（この魚種の今治沿岸向け水温応答を裏付ける資料が不足）");
+ add("風",windConditionScore(w.wind_speed_10m),p.ww,Number.isFinite(w.wind_speed_10m)?"風速予報による釣りやすさ":"風速データ未取得");
+ add("波",waveConditionScore(mp&&mp.wave_height),p.wav,Number.isFinite(mp&&mp.wave_height)?"波高モデルによる釣り場環境の目安":"波高モデル値を取得できず");
+ add("降水",rainConditionScore(w.precipitation),p.rw,Number.isFinite(w.precipitation)?"降水予報による釣行環境":"降水データ未取得");
+ missing.push("ベイト（釣り場別の魚群・ベイト観測データを取得できず）","潮流（釣り場別の潮汐流速・流向を取得できず。沖合海流モデルとは別物）","マズメ（魚種別・地域別の釣果検証が不足しているため加点なし）");
+ const weight=parts.reduce((s,x)=>s+x.weight,0),score=weight?Math.round(parts.reduce((s,x)=>s+x.value*x.weight,0)/weight):null;return {score,parts,missing};}
 function getMarinePoint(index){if(!marine||!marine.hourly)return {};const h=marine.hourly;const targetTime=wx&&wx.hourly&&wx.hourly.time?wx.hourly.time[index]:null;let i=targetTime&&h.time?h.time.indexOf(targetTime):-1;if(i<0)i=Math.min(index,(h.time||[]).length-1);const v=k=>h[k]&&Number.isFinite(h[k][i])?h[k][i]:null;return {sea_surface_temperature:v("sea_surface_temperature"),wave_height:v("wave_height")};}
 function grade(n){return n>=75?"環境条件は良好":n>=60?"やや良好":n>=45?"標準的":n>=30?"やや厳しめ":"厳しめ"}
 function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row"><span>${a}</span><b>${b}</b></div>`).join("")}
