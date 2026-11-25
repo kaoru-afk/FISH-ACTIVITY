@@ -39,7 +39,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
   <div class="toolbar">
     <label class="field">釣り場<select id="spot"><option value="tomita">富田新港</option><option value="kikuma">菊間港</option><option value="matsugasaki">松ヶ崎</option><option value="imabari">今治港</option><option value="ohama">大浜周辺</option></select></label>
     <label class="field">対象魚<select id="target"><option value="青物">青物（ブリ・ハマチ）</option><option value="サワラ">サワラ・サゴシ</option><option value="アオリイカ">アオリイカ</option><option value="カサゴ">カサゴ</option><option value="マダイ">マダイ</option><option value="ヒラメ">ヒラメ・マゴチ</option></select></label>
-    <label class="field">予測日<select id="day"><option value="0">今日</option><option value="1">明日</option><option value="2">明後日</option></select></label>
+    <label class="field">予測日<select id="day"><option value="0">今日</option><option value="1">明日</option><option value="2">明後日</option><option value="3">3日後</option><option value="4">4日後</option><option value="5">5日後</option><option value="6">6日後</option></select></label>
     <button id="refresh">気象データを更新</button>
   </div>
 
@@ -109,7 +109,8 @@ function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row">
 function render(){
  if(!wx)return;
  const day=+$("day").value, spot=spots[$("spot").value], target=$("target").value;
- const idx=day===0?0:day===1?24:48, hourly=wx.hourly;
+ const hourly=wx.hourly, idx=Math.min(day*24,Math.max(0,hourly.time.length-1));
+ if(!hourly.time.length||!wx.daily||day>=wx.daily.time.length||idx>=hourly.time.length){$("summary").textContent="選択日の予報データがまだありません。更新して再試行してね。";return;}
  const w={wind_speed_10m:hourly.wind_speed_10m[idx],temperature_2m:hourly.temperature_2m[idx],precipitation:hourly.precipitation[idx],surface_pressure:hourly.surface_pressure[idx]};
  const score=weatherScore(w,day===0?currentHour():12);
  $("score").innerHTML=score+'<small> / 100</small>';$("grade").textContent=grade(score);$("summary").textContent=`${spot.name}の気象条件をもとにした暫定評価。対象：${target}`;
@@ -151,12 +152,12 @@ async function load(force=false){
  activeController=controller;
  const signal=controller.signal;
  $("updated").textContent="データ取得中…";
- const weatherKey="fa_weather_"+spotKey, marineKey="fa_marine_"+spotKey;
+ const weatherKey="fa_weather_v2_"+spotKey, marineKey="fa_marine_v2_"+spotKey;
  const cachedWx=force?null:cacheRead(weatherKey), cachedMarine=force?null:cacheRead(marineKey);
  wx=cachedWx||null; marine=cachedMarine||null;
  if(wx){render();$("updated").textContent="保存データを表示・最新情報を取得中…";}
- const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=3&timezone=Asia%2FTokyo`;
- const marineUrl=`https://marine-api.open-meteo.com/v1/marine?latitude=${s.lat}&longitude=${s.lon}&hourly=wave_height,sea_level_height_msl,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&forecast_days=3&timezone=Asia%2FTokyo&cell_selection=sea`;
+ const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`;
+ const marineUrl=`https://marine-api.open-meteo.com/v1/marine?latitude=${s.lat}&longitude=${s.lon}&hourly=wave_height,sea_level_height_msl,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&forecast_days=7&timezone=Asia%2FTokyo&cell_selection=sea`;
  let timedOut=false, weatherError=null, marineError=null;
  const timeout=setTimeout(()=>{timedOut=true;controller.abort();},15000);
  const getJson=async(url,label)=>{
