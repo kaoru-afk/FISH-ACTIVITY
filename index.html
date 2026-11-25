@@ -13,7 +13,7 @@ header{padding:22px max(18px,calc((100vw - 1180px)/2));border-bottom:1px solid v
 .pill{border:1px solid #386079;border-radius:99px;padding:7px 11px;color:#b9d7e7;font-size:12px}
 main{max-width:1180px;margin:auto;padding:22px 18px 50px}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:18px}
-.recommend-card{margin:0 0 16px}.recommend-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.recommend-item{background:rgba(7,27,43,.55);border:1px solid var(--line);border-radius:12px;padding:12px}.recommend-item strong{display:block;margin-bottom:5px}.recommend-item .why{font-size:12px;color:var(--muted);min-height:34px}.recommend-item button{margin-top:9px;padding:8px 11px;font-size:12px}.recommend-score{font-size:11px;color:var(--cyan);margin-top:4px}
+.recommend-card{margin:0 0 16px}.planner-card{margin:0 0 16px}.planner-controls{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin:12px 0}.planner-controls .field{flex:1;min-width:170px}.planner-results{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}.planner-item{background:rgba(7,27,43,.6);border:1px solid var(--line);border-radius:12px;padding:12px}.planner-item strong{display:block;margin-bottom:5px}.planner-item .why{font-size:12px;color:var(--muted);line-height:1.55}.planner-item .planner-score{font-size:18px;font-weight:800;color:var(--cyan);margin:5px 0}.planner-item button{margin-top:8px;padding:8px 11px;font-size:12px}.planner-meta{font-size:11px;color:var(--muted)}.recommend-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.recommend-item{background:rgba(7,27,43,.55);border:1px solid var(--line);border-radius:12px;padding:12px}.recommend-item strong{display:block;margin-bottom:5px}.recommend-item .why{font-size:12px;color:var(--muted);min-height:34px}.recommend-item button{margin-top:9px;padding:8px 11px;font-size:12px}.recommend-score{font-size:11px;color:var(--cyan);margin-top:4px}
 .field{display:grid;gap:6px;color:var(--muted);font-size:12px}.field select,.field input{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;min-width:170px}
 button{cursor:pointer;background:var(--cyan);border:0;border-radius:10px;padding:11px 15px;font-weight:750;color:#06202d}
 .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}.card{background:linear-gradient(145deg,rgba(19,48,68,.96),rgba(13,37,55,.96));border:1px solid var(--line);border-radius:17px;padding:17px;min-width:0;box-shadow:0 8px 24px #0002}
@@ -45,6 +45,17 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <button id="refresh">気象データを更新</button>
   </div>
   <section class="card recommend-card" id="spotRecommendations" aria-live="polite"><h3>🐟 この魚種におすすめの釣り場</h3><div id="recommendationList" class="recommend-list"><p class="small">魚種を選ぶと、このエリアの釣り場から候補を表示するよ。</p></div><p class="small">※魚種の生態・釣り場タイプ・地形キーワードをもとにした候補。釣果や当日の回遊を保証するものではないよ。</p></section>
+  <section class="card planner-card" id="tripPlanner">
+    <h3>🎯 おすすめ釣行プラン（日付 × 魚種 × 釣り場）</h3>
+    <p class="small">選んだ日付の予報を釣り場候補ごとに取得し、魚種との相性を比較するよ。予報取得は最大7地点。対象は選択中の市町・海域だよ。</p>
+    <div class="planner-controls">
+      <label class="field">探し方<select id="plannerMode"><option value="date">この日におすすめの魚と釣り場</option><option value="fish">この魚におすすめの釣り場</option><option value="spot">この釣り場でおすすめの魚</option></select></label>
+      <label class="field">対象魚<select id="plannerFish"><option value="all">全魚種</option></select></label>
+      <button type="button" id="runPlanner">おすすめを検索</button>
+    </div>
+    <div id="plannerResults" aria-live="polite"><p class="small">「おすすめを検索」を押すと、選択日・魚種・釣り場の組み合わせを比較するよ。</p></div>
+    <p class="small">※おすすめ度は季節資料・釣り場タイプ・各地点の気象／海洋モデル予報を組み合わせた暫定的な環境適合度。釣果確率や魚の回遊を示すものではないよ。地磯候補の進入可否・釣り可否は別途確認してね。</p>
+  </section>
   <p class="small">釣り場候補は公開されている釣り場情報をもとに拡充中の一覧だよ。座標は予報用の近似値で、釣り座の正確な位置ではないよ。地磯・磯場は公開情報で名称を確認できた地点に加え、海岸沿いの岩場候補も含むため、釣行前に地形・進入路・釣り可否を必ず確認してね。沖磯は渡船が必要な場所として別表示するよ。釣り禁止・立入禁止・駐車ルールは変更されることがあるので、現地掲示と管理者の案内を必ず確認してね。参考：<a class="source-link" href="https://s.turihiroba.com/ehime.html" target="_blank" rel="noopener">愛媛県釣り場マップ</a> ／ <a class="source-link" href="https://tsurineo.com/a/toyo" target="_blank" rel="noopener">東予の釣り場一覧</a> ／ <a class="source-link" href="https://tsurineo.com/a/matsuyama" target="_blank" rel="noopener">松山の釣り場一覧</a> ／ <a class="source-link" href="https://www.seiyojikan.jp/activities/activities4/" target="_blank" rel="noopener">西予市のフィッシングポイント</a> ／ <a class="source-link" href="https://tsuriba.info/spotlistmap/38" target="_blank" rel="noopener">愛媛の釣り場マップ（67地点）</a> ／ <a class="source-link" href="https://xn--nbk170jyl2b.net/ehime/" target="_blank" rel="noopener">愛媛県の釣り場一覧（279地点）</a></p>
 
   <section class="grid">
@@ -231,6 +242,61 @@ function evaluateFish(w,mp,date,target){const p=fishProfiles[target],parts=[],mi
  add("降水",rainConditionScore(w.precipitation),p.rw,Number.isFinite(w.precipitation)?"降水予報による釣行環境":"降水データ未取得");
  missing.push("ベイト（釣り場別の魚群・ベイト観測データを取得できず）","潮流（海洋モデルの海流値は取得可能だが、港内・釣り座の潮流を直接示すものではない）","マズメ（魚種別・地域別の釣果検証が不足しているため加点なし）");
  const weight=parts.reduce((s,x)=>s+x.weight,0),score=weight?Math.round(parts.reduce((s,x)=>s+x.value*x.weight,0)/weight):null;return {score,parts,missing};}
+async function runTripPlanner(){
+ const mode=$("plannerMode").value, selectedFish=$("plannerFish").value, areaId=$("area").value;
+ const areaList=areaFishSpots[areaId]||[], offset=Number($("day").value)||0;
+ const date=new Date();date.setDate(date.getDate()+offset);
+ const dateKey=[date.getFullYear(),String(date.getMonth()+1).padStart(2,"0"),String(date.getDate()).padStart(2,"0")].join("-");
+ const resultBox=$("plannerResults"); if(!areaList.length){resultBox.innerHTML='<p class="small">このエリアに釣り場候補がないよ。</p>';return;}
+ if((mode==="fish")&&selectedFish==="all"){resultBox.innerHTML='<p class="small">魚種から探す場合は、上の「対象魚」でも魚種を選んでね。</p>';return;}
+ resultBox.innerHTML='<p class="small">選択日 '+dateKey+' の地点別予報を取得中…</p>';
+ const fishes=mode==="fish"?[selectedFish]:mode==="spot"?getRegionFish():getRegionFish();
+ const candidates=areaList.map(p=>{const type=p[3]||spotTypeByName[p[0]]||"port";let best=0;for(const f of fishes){const prof=recommendationProfile(f);best=Math.max(best,prof.types[type]||0,...prof.words.filter(w=>p[0].includes(w)).map(()=>Math.min(6,(prof.types[type]||0)+.8)));}return {p,type,base:best};});
+ let chosen=[];
+ if(mode==="spot"){
+  const current=spots[$("spot").value];const found=areaList.find(p=>p[0]===current?.name);if(found)chosen=[{p:found,type:found[3]||spotTypeByName[found[0]]||"port",base:10}];
+ }else if(mode==="fish"){
+  const prof=recommendationProfile(selectedFish);
+  chosen=candidates.map(x=>({...x,base:(prof.types[x.type]||0)+Math.min(2,prof.words.filter(w=>x.p[0].includes(w)).length)*.8})).sort((a,b)=>b.base-a.base).slice(0,7);
+ }else{
+  chosen=candidates.sort((a,b)=>b.base-a.base).slice(0,7);
+ }
+ if(!chosen.length){resultBox.innerHTML='<p class="small">候補地点を選べなかったよ。釣り場を選び直してね。</p>';return;}
+ const fetchPoint=async(item)=>{
+  const p=item.p,lat=p[1],lon=p[2];
+  const wu='https://api.open-meteo.com/v1/forecast?latitude='+lat+'&longitude='+lon+'&hourly=wind_speed_10m,precipitation&daily=precipitation_sum&wind_speed_unit=ms&forecast_days=7&timezone=Asia%2FTokyo';
+  const mu='https://marine-api.open-meteo.com/v1/marine?latitude='+lat+'&longitude='+lon+'&hourly=wave_height,sea_surface_temperature&forecast_days=7&timezone=Asia%2FTokyo&cell_selection=sea';
+  const [wr,mr]=await Promise.allSettled([fetch(wu).then(x=>{if(!x.ok)throw Error("weather");return x.json()}),fetch(mu).then(x=>{if(!x.ok)throw Error("marine");return x.json()})]);
+  const w=wr.status==="fulfilled"?wr.value:null,m=mr.status==="fulfilled"?mr.value:null;
+  const avg=(arr)=>{const vals=(arr||[]).filter(Number.isFinite);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
+  const dayIndex=w?.daily?.time?.indexOf(dateKey)??-1;
+  const hourlyIndices=(w?.hourly?.time||[]).map((t,i)=>t.startsWith(dateKey)?i:-1).filter(i=>i>=0);
+  const marineIndices=(m?.hourly?.time||[]).map((t,i)=>t.startsWith(dateKey)?i:-1).filter(i=>i>=0);
+  const wa=arr=>avg(hourlyIndices.map(i=>arr?.[i]));
+  const ma=arr=>avg(marineIndices.map(i=>arr?.[i]));
+  return {name:p[0],p,type:item.type,base:item.base,weather:{wind_speed_10m:wa(w?.hourly?.wind_speed_10m),precipitation:wa(w?.hourly?.precipitation)},marine:{wave_height:ma(m?.hourly?.wave_height),sea_surface_temperature:ma(m?.hourly?.sea_surface_temperature)},ok:!!w&&hourlyIndices.length>0};
+ };
+ const points=await Promise.all(chosen.map(fetchPoint));
+ const pairs=[];
+ for(const point of points){
+  if(!point.ok)continue;
+  const fishList=mode==="fish"?[selectedFish]:mode==="spot"?getRegionFish():fishes;
+  for(const fish of fishList){
+   const ev=evaluateFish(point.weather,point.marine,date,fish);
+   if(!Number.isFinite(ev.score))continue;
+   const prof=recommendationProfile(fish),hab=(prof.types[point.type]||0)+Math.min(2,prof.words.filter(w=>point.name.includes(w)).length)*.8;
+   const habitatScore=Math.min(95,Math.round(48+hab*7));
+   const score=Math.round(ev.score*.78+habitatScore*.22);
+   const details=['季節・水温・風・波・降水の取得できた要因を評価','釣り場タイプ適合 '+(hab>=5?'高め':hab>=3?'中程度':'参考')];
+   pairs.push({fish,spot:point.name,score,env:ev.score,hab,why:prof.why,details,point});
+  }
+ }
+ pairs.sort((a,b)=>b.score-a.score||b.env-a.env);
+ const unique=pairs.filter((x,i)=>pairs.findIndex(y=>y.fish===x.fish&&y.spot===x.spot)===i);
+ const display=unique.slice(0,mode==="spot"?8:mode==="fish"?7:8);
+ if(!display.length){resultBox.innerHTML='<p class="small">この日の予報を十分に取得できなかったよ。時間をおいて再検索してね。</p>';return;}
+ resultBox.innerHTML='<p class="small">📅 '+dateKey+' · '+escapeHtml(regions[$("region").value].name)+' / '+escapeHtml(regions[$("region").value].areas.find(a=>a.id===areaId)?.name||"")+' · 予報取得 '+points.filter(p=>p.ok).length+'/'+points.length+' 地点</p><div class="planner-results">'+display.map((x,i)=>'<article class="planner-item"><strong>'+(i+1)+'. '+escapeHtml(x.fish)+' × '+escapeHtml(x.spot)+'</strong><div class="planner-score">環境適合度 '+x.score+'/100</div><div class="why">'+escapeHtml(x.why)+'。風・波・水温・降水の地点別予報を反映（取得できた項目のみ）</div><div class="planner-meta">環境評価 '+x.env+'/100 · 釣り場タイプ '+(x.hab>=5?'高適合':x.hab>=3?'中程度':'参考')+'</div><button type="button" data-plan-spot="'+escapeHtml(x.spot)+'" data-plan-fish="'+escapeHtml(x.fish)+'">この魚・釣り場を選択</button></article>').join('')+'</div>';
+}
 function getMarinePoint(index){if(!marine||!marine.hourly)return {};const h=marine.hourly;const targetTime=wx&&wx.hourly&&wx.hourly.time?wx.hourly.time[index]:null;const i=targetTime&&h.time?h.time.indexOf(targetTime):-1;if(i<0)return {};const v=k=>h[k]&&Number.isFinite(h[k][i])?h[k][i]:null;return {sea_surface_temperature:v("sea_surface_temperature"),wave_height:v("wave_height")};}
 function grade(n){if(!Number.isFinite(n))return "判定材料不足";return n>=75?"環境条件は良好":n>=60?"やや良好":n>=45?"標準的":n>=30?"やや厳しめ":"厳しめ"}
 function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row"><span>${a}</span><b>${b}</b></div>`).join("")}
@@ -401,6 +467,6 @@ async function load(force=false){
 }
 $("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
 $("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("area").addEventListener("change",()=>{updateArea();load(true)});$("spotType").addEventListener("change",()=>{updateArea();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderSpotRecommendations();renderFishingAdvice();render()});
-document.addEventListener("click",e=>{const b=e.target.closest("[data-recommend-spot]");if(!b)return;const name=b.getAttribute("data-recommend-spot"),list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(!p)return;$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const opt=[...$("spot").options].find(o=>o.textContent===name);if(opt){$("spot").value=opt.value;load(true);}});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
+document.addEventListener("click",e=>{const b=e.target.closest("[data-recommend-spot]");if(!b)return;const name=b.getAttribute("data-recommend-spot"),list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(!p)return;$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const opt=[...$("spot").options].find(o=>o.textContent===name);if(opt){$("spot").value=opt.value;load(true);}});$("day").addEventListener("change",()=>{render();$("plannerResults").innerHTML='<p class="small">日付を変更したよ。「おすすめを検索」を押して再計算してね。</p>'});$("runPlanner").addEventListener("click",runTripPlanner);$("plannerFish").innerHTML='<option value="all">全魚種</option>'+fishNames.map(n=>'<option value="'+n+'">'+n+'</option>').join("");$("plannerMode").addEventListener("change",()=>{$("plannerFish").disabled=$("plannerMode").value==="spot";});$("area").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("region").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("target").addEventListener("change",()=>{$("plannerFish").value=$("target").value==="all"?"all":$("target").value;});document.addEventListener("click",e=>{const b=e.target.closest("[data-plan-spot]");if(!b)return;const name=b.dataset.planSpot,fish=b.dataset.planFish,list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(p){$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const o=[...$("spot").options].find(x=>x.textContent===name);if(o)$("spot").value=o.value;$("target").value=fish;renderSpotRecommendations();load(true);}});window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
 </script>
 </body></html>
