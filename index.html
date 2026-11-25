@@ -38,7 +38,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 <main>
   <div class="toolbar">
     <label class="field">県内エリア<select id="region"><option value="toyo">東予</option><option value="chuyo">中予</option><option value="nanyo">南予</option></select></label>
-    <label class="field">市町・海域<select id="spot"></select></label>
+    <label class="field">市町・海域<select id="area"></select></label><label class="field">釣り場<select id="spot"></select></label>
     <label class="field">対象魚<select id="target"><option value="all">このエリアの全魚種</option></select></label>
     <label class="field">予測日<select id="day"><option value="0">今日</option><option value="1">明日</option><option value="2">明後日</option><option value="3">3日後</option><option value="4">4日後</option><option value="5">5日後</option><option value="6">6日後</option></select></label>
     <button id="refresh">気象データを更新</button>
@@ -80,7 +80,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 <div class="row"><span>港内の局地的な潮流</span><span class="tag">未取得</span></div>
 <p class="small">次段階では海上保安庁「海しるAPI」の潮汐・潮流データを調査して追加する。</p></div><div class="card"><h3>公式の潮位・潮流情報</h3><div class="row"><span>今治の満潮・干潮・毎時潮位</span><a class="source-link" href="https://ds.data.jma.go.jp/gmd/kaiyou/db/tide/suisan/suisan.php?stn=L0" target="_blank" rel="noopener">気象庁 潮位表</a></div><div class="row"><span>来島海峡の潮流推算</span><a class="source-link" href="https://www1.kaiho.mlit.go.jp/KAN6/2_kaisyo_new/tidal-current/tidalc_forecast.html" target="_blank" rel="noopener">第六管区海上保安本部</a></div><div class="row"><span>来島海峡の10分間隔予測図</span><a class="source-link" href="https://www.mirc.jha.or.jp/cgi-bin/w/w-tcp?AREA=kurushima" target="_blank" rel="noopener">MIRC 潮流予測</a></div><p class="source-note">気象庁の今治潮位表は満潮・干潮と毎時潮位を掲載。潮位表基準面上の値で、標高基準の潮位ではないよ。来島海峡の潮流予測は海峡向けで、富田新港・菊間港など各釣り場の港内流速を保証しないよ。</p></div></div></section>
 
-  <section class="panel" id="weather"><div class="two"><div class="card"><h3>気象データ</h3><div id="weatherDetails" class="small">取得中</div></div><div class="card"><h3>日の出・日の入り</h3><div id="sunDetails" class="small">取得中</div><h3 style="margin-top:20px">データ提供元</h3><p class="small">Open-Meteo（気象予報API）。地点は選択した市町・海域の代表座標。</p></div></div></section>
+  <section class="panel" id="weather"><div class="two"><div class="card"><h3>気象データ</h3><div id="weatherDetails" class="small">取得中</div></div><div class="card"><h3>日の出・日の入り</h3><div id="sunDetails" class="small">取得中</div><h3 style="margin-top:20px">データ提供元</h3><p class="small">Open-Meteo（気象予報API）。釣り場候補の座標は目安。予報は周辺のモデル格子値で、港内の実測値ではないよ。</p></div></div></section>
 
   <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">選択魚種について、取得できた魚種別要因と釣りやすさ要因を使って算出。潮流・ベイト・釣果実績は未反映。未取得項目は計算から除外。</p><div id="bestTimes"></div></div></section>
 
@@ -110,12 +110,34 @@ const areaFish={
  uwajima:["アジ","サバ","メバル","カサゴ","チヌ","グレ","マダイ","アオリイカ","タチウオ","青物","イサキ","イシダイ","ハタ類","ヒラメ"],
  ainan:["アジ","サバ","メバル","カサゴ","チヌ","グレ","マダイ","アオリイカ","タチウオ","青物","イサキ","イシダイ","ハタ類","ヒラメ","サワラ"]
 };
+const areaFishSpots={
+ kamijima:[["弓削漁港",34.25,133.20],["岩城港",34.24,133.14],["生名漁港",34.27,133.18]],
+ imabari:[["富田新港",34.055,133.018],["今治港",34.066,132.998],["松ヶ崎",34.075,132.91],["波止浜港",34.10,132.99],["大浜漁港",34.10,132.96],["伯方港",34.21,133.10],["大三島・宮浦港",34.25,133.07]],
+ saijo:[["西条港",33.93,133.18],["河原津漁港",33.96,133.08],["壬生川港",33.93,133.13],["加茂川河口",33.92,133.17]],
+ niihama:[["黒島・白灯台",33.99,133.30],["マリンパーク新居浜",33.99,133.32],["沢津漁港",33.97,133.31],["菊本岸壁",33.97,133.27]],
+ shikokuchuo:[["川之江港",34.01,133.57],["三島港",33.98,133.55],["寒川豊岡海浜公園",33.97,133.50],["土居漁港",33.96,133.43]],
+ matsuyama:[["大可賀釣り公園",33.86,132.70],["三津浜港",33.86,132.71],["北条港",33.97,132.78],["高浜観光港",33.90,132.70],["堀江漁港",33.90,132.74]],
+ masaki:[["伊予港",33.75,132.70],["松前港",33.79,132.71],["森漁港",33.74,132.72],["新川埋立地",33.75,132.72]],
+ futami:[["上灘漁港",33.66,132.59],["下灘漁港",33.65,132.56],["豊田漁港",33.64,132.55]],
+ ozu:[["長浜港",33.62,132.48],["櫛生漁港",33.57,132.46],["出海漁港",33.59,132.45]],
+ yawatahama:[["八幡浜港",33.46,132.42],["川之石港",33.47,132.40],["三崎漁港",33.39,132.13],["三机漁港",33.47,132.25]],
+ seiyo:[["三瓶町周木漁港",33.36,132.40],["長早中ノ浦漁港",33.34,132.42],["明浜漁港",33.30,132.45],["高山漁港",33.31,132.47]],
+ uwajima:[["宇和島港",33.22,132.56],["吉田漁港",33.27,132.53],["遊子漁港",33.20,132.52],["赤松漁港",33.20,132.55]],
+ ainan:[["深浦漁港",32.96,132.56],["御荘港",32.96,132.57],["久良漁港",32.94,132.53],["内海漁港",32.91,132.53]]
+};
 const spots={};
-function getRegionFish(){return areaFish[$("spot").value]||regions[$("region").value].fish;}
+function getRegionFish(){return areaFish[$("area").value]||regions[$("region").value].fish;}
 function updateRegion(){
  const data=regions[$("region").value];
- $("spot").innerHTML=data.areas.map(a=>'<option value="'+a.id+'">'+a.name+'</option>').join("");
- Object.keys(spots).forEach(k=>delete spots[k]);data.areas.forEach(a=>spots[a.id]=a);
+ $("area").innerHTML=data.areas.map(a=>'<option value="'+a.id+'">'+a.name+'</option>').join("");
+ updateArea();
+}
+function updateArea(){
+ const areaId=$("area").value;
+ const list=areaFishSpots[areaId]||[];
+ Object.keys(spots).forEach(k=>delete spots[k]);
+ list.forEach((p,i)=>{const id=areaId+"_spot_"+i;spots[id]={id,name:p[0],lat:p[1],lon:p[2]};});
+ $("spot").innerHTML=list.map((p,i)=>'<option value="'+areaId+'_spot_'+i+'">'+p[0]+'</option>').join("");
  $("target").innerHTML='<option value="all">このエリアの全魚種</option>'+getRegionFish().map(n=>'<option value="'+n+'">'+n+'</option>').join("");
 }
 let wx=null, marine=null;
@@ -279,7 +301,7 @@ async function load(force=false){
  activeController=controller;
  const signal=controller.signal;
  $("updated").textContent="データ取得中…";
- const weatherKey="fa_weather_v3_"+spotKey, marineKey="fa_marine_v3_"+spotKey;
+ const weatherKey="fa_weather_v4_"+spotKey, marineKey="fa_marine_v4_"+spotKey;
  const cachedWx=force?null:cacheRead(weatherKey), cachedMarine=force?null:cacheRead(marineKey);
  wx=cachedWx||null; marine=cachedMarine||null;
  if(wx){render();$("updated").textContent="保存データを表示・最新情報を取得中…";}
@@ -326,6 +348,6 @@ async function load(force=false){
  }
 }
 $("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
-$("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderFishingAdvice();render()});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
+$("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("area").addEventListener("change",()=>{updateArea();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderFishingAdvice();render()});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
 </script>
 </body></html>
