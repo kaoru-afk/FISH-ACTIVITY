@@ -64,9 +64,9 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <div class="card"><h3>今日の釣行ポイント</h3><div id="overviewAdvice" class="small">気象データ取得後に表示</div></div>
   </div></section>
 
-  <section class="panel" id="forecast"><div class="card"><h3>24時間・環境指標とマズメ時間帯</h3><div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:#42d4d8"></i>環境指標（0〜100）</span><span class="legend-item"><i class="legend-dot" style="background:#e9ad54"></i>朝マズメ目安</span><span class="legend-item"><i class="legend-dot" style="background:#d88b48"></i>夕マズメ目安</span></div><canvas class="chart" id="hourChart"></canvas><p class="small">金色の帯は日の出・日の入りを基準にした時間帯の目安。魚の活性や釣果を示すものではないよ。潮位の線は、今治の公式な毎時潮位データを安定取得できる接続方法を確認してから追加するね。</p><div id="hourList"></div></div></section>
+  <section class="panel" id="forecast"><div class="card"><h3>24時間・環境指標とマズメ時間帯</h3><div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:#42d4d8"></i>環境指標（0〜100）</span><span class="legend-item"><i class="legend-dot" style="background:#e9ad54"></i>朝マズメ目安</span><span class="legend-item"><i class="legend-dot" style="background:#d88b48"></i>夕マズメ目安</span></div><canvas class="chart" id="hourChart"></canvas><p class="small">金色の帯は実際の日の出・日の入り時刻を基準にした目安。スコアは気象条件中心で、サワラのみ他海域の漁獲調査に基づく弱い時間補正を加えるよ。潮位の線は、今治の公式な毎時潮位データを安定取得できる接続方法を確認してから追加するね。</p><div id="hourList"></div></div></section>
 
-  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><p class="small">魚種別の点数は共通の気象スコアに暫定補正を加えた参考指標。季節性・水温・潮流は未反映で、釣果確率ではないよ。</p></div></section>
+  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><p class="small">固定時刻ボーナスと根拠のない魚種別点差を廃止。サワラのみ、他海域の漁獲調査で報告された「日の出後1〜4時間」の傾向を弱く反映した参考値。今治の岸釣りで検証された予測ではなく、釣果確率でもないよ。</p></div></section>
 
   <section class="panel" id="tide"><div class="two">
 <div class="card"><h3>海洋コンディション</h3><div id="marineDetails" class="small">海洋データ取得中</div>
@@ -81,7 +81,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 
   <section class="panel" id="weather"><div class="two"><div class="card"><h3>気象データ</h3><div id="weatherDetails" class="small">取得中</div></div><div class="card"><h3>日の出・日の入り</h3><div id="sunDetails" class="small">取得中</div><h3 style="margin-top:20px">データ提供元</h3><p class="small">Open-Meteo（気象予報API）。地点は選択した今治市本土内の代表座標。</p></div></div></section>
 
-  <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">現段階は気象条件と朝夕の時間帯だけによる暫定ランキング。</p><div id="bestTimes"></div></div></section>
+  <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">気象条件を中心に算出。サワラのみ日の出後の参考傾向を弱く反映。潮流・ベイト・釣果実績は未反映。</p><div id="bestTimes"></div></div></section>
 
   <section class="panel" id="spots"><div class="card"><h3>今治市本土・釣り場比較</h3><p class="small">同一の広域気象予報を参照する簡易比較。釣り場固有の風・波・潮流を表すものではないよ。</p><div id="spotCompare"></div></div></section>
 
@@ -98,30 +98,32 @@ function cacheRead(key){try{const v=JSON.parse(localStorage.getItem(key)||"null"
 function cacheWrite(key,data){try{localStorage.setItem(key,JSON.stringify({savedAt:Date.now(),data}))}catch(_){}} 
 function setDataStatus(id,text){const el=$(id);if(el)el.textContent=text}
 const fmt=(v,d=0)=>Number.isFinite(v)?v.toFixed(d):"--";
-function currentHour(){return new Date().getHours()}
-function timeFactor(h){let peaks=[5,6,7,16,17,18,19];return peaks.includes(h)?18:(h>=4&&h<=9||h>=15&&h<=20?12:0)}
-function weatherScore(w,h){let s=50;let wind=w.wind_speed_10m??10;let temp=w.temperature_2m??15;let rain=w.precipitation??0;let pressure=w.surface_pressure??1013;
+function weatherScore(w){let s=50;let wind=w.wind_speed_10m??10;let temp=w.temperature_2m??15;let rain=w.precipitation??0;let pressure=w.surface_pressure??1013;
 s+=wind<=4?12:wind<=7?6:wind<=10?0:wind<=14?-12:-25;
-s+=rain<0.2?5:rain<1?-2:-12;s+=temp>=12&&temp<=24?8:temp<5||temp>30?-8:2;s+=pressure>=1005&&pressure<=1025?4:-3;s+=timeFactor(h);
+s+=rain<0.2?5:rain<1?-2:-12;s+=temp>=12&&temp<=24?8:temp<5||temp>30?-8:2;s+=pressure>=1005&&pressure<=1025?4:-3;
 return Math.max(0,Math.min(100,Math.round(s)))}
+function solarFishFactor(time,sunrise,sunset,target){if(target!=="サワラ")return 0;const t=time.getTime(),rise=sunrise.getTime(),set=sunset.getTime(),hoursAfter=(t-rise)/3600000;if(hoursAfter>=0.5&&hoursAfter<=4)return 6;if(hoursAfter>4&&hoursAfter<5)return 3;return 0}
+function fishScore(w,time,sunrise,sunset,target){return Math.max(0,Math.min(100,weatherScore(w)+solarFishFactor(time,sunrise,sunset,target)))}
 function grade(n){return n>=75?"環境条件は良好":n>=60?"やや良好":n>=45?"標準的":n>=30?"やや厳しめ":"厳しめ"}
 function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row"><span>${a}</span><b>${b}</b></div>`).join("")}
 function render(){
  if(!wx)return;
  const day=+$("day").value, spot=spots[$("spot").value], target=$("target").value;
- const hourly=wx.hourly, idx=Math.min(day*24,Math.max(0,hourly.time.length-1));
- if(!hourly.time.length||!wx.daily||day>=wx.daily.time.length||idx>=hourly.time.length){$("summary").textContent="選択日の予報データがまだありません。更新して再試行してね。";return;}
- const w={wind_speed_10m:hourly.wind_speed_10m[idx],temperature_2m:hourly.temperature_2m[idx],precipitation:hourly.precipitation[idx],surface_pressure:hourly.surface_pressure[idx]};
- const baseScore=weatherScore(w,day===0?currentHour():12);
- const names=["青物","サワラ","アオリイカ","カサゴ","マダイ","ヒラメ"], offsets=[0,2,-3,-1,-2,-4];
- const fishOffset=target==="all"?0:(offsets[names.indexOf(target)]??0);
- const score=Math.max(0,Math.min(100,baseScore+fishOffset));
+ const hourly=wx.hourly, firstIdx=Math.min(day*24,Math.max(0,hourly.time.length-1));
+ if(!hourly.time.length||!wx.daily||day>=wx.daily.time.length||firstIdx>=hourly.time.length){$("summary").textContent="選択日の予報データがまだありません。更新して再試行してね。";return;}
+ const d=wx.daily, sunrise=new Date(d.sunrise[day]), sunset=new Date(d.sunset[day]);
+ let idx=firstIdx;if(day===0){const nextHour=hourly.time.findIndex(t=>new Date(t).getTime()>=Date.now());if(nextHour>=0)idx=nextHour;}
+ const scoreIdx=day===0?idx:Math.min(firstIdx+12,hourly.time.length-1);
+ const getWeather=j=>({wind_speed_10m:hourly.wind_speed_10m[j],temperature_2m:hourly.temperature_2m[j],precipitation:hourly.precipitation[j],surface_pressure:hourly.surface_pressure[j]});
+ const w=getWeather(scoreIdx), scoreTime=new Date(hourly.time[scoreIdx]);
+ const names=["青物","サワラ","アオリイカ","カサゴ","マダイ","ヒラメ"];
+ const baseScore=weatherScore(w), score=target==="all"?baseScore:fishScore(w,scoreTime,sunrise,sunset,target);
  const selectedDate=wx.daily.time[day].split("-").map(Number);const dateLabel=`${selectedDate[0]}年${selectedDate[1]}月${selectedDate[2]}日`;
  const targetLabel=target==="all"?"すべての魚種":target;
  $("score").innerHTML=score+'<small> / 100</small>';$("grade").textContent=grade(score);$("summary").textContent=`${spot.name}・${dateLabel}の${targetLabel}向け暫定環境指標。魚種補正を含む参考値で、釣果確率ではないよ。`;
  $("wind").textContent=fmt(w.wind_speed_10m,1)+" m/s";$("temp").textContent=fmt(w.temperature_2m,1)+" ℃";$("pressure").textContent=fmt(w.surface_pressure,0)+" hPa";$("rain").textContent=fmt(w.precipitation,1)+" mm";
  const reasons=[["風",w.wind_speed_10m<=7?"比較的穏やか":w.wind_speed_10m<=10?"やや強め":"強風に注意"],["降水",w.precipitation<0.2?"少ない":"雨に注意"],["気温",w.temperature_2m+" ℃"],["評価",grade(score)]];
- setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["時間帯",timeFactor(currentHour())?"朝夕の時合い候補":"マヅメ以外"],["潮汐","未取得"],["水温","未取得"]]);
+ setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["評価時刻",scoreTime.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})],["魚種別時間補正",target==="サワラ"?(solarFishFactor(scoreTime,sunrise,sunset,target)>0?"日の出後の参考時間帯":"補正なし"):"根拠不足のため加点なし"],["潮汐","未取得"],["水温","未取得"]]);
  $("overviewAdvice").innerHTML=`<div class="recommend">${w.wind_speed_10m>10?"風が強め。風裏や安全な場所を優先してね。":"風速は予報上、極端に強くはない見込み。現地の風と波を確認してね。"}</div><div class="recommend">${w.precipitation>=1?"降水予報あり。視界・足場・雷情報を確認。":"降水量は少ない予報。"}</div><div class="recommend">潮汐・水温が未取得のため、魚種別の最終判断は保留。</div>`;
  $("weatherDetails").innerHTML=`<div class="row"><span>風向</span><b>${fmt(hourly.wind_direction_10m[idx])}°</b></div><div class="row"><span>風速</span><b>${fmt(w.wind_speed_10m,1)} m/s</b></div><div class="row"><span>気温</span><b>${fmt(w.temperature_2m,1)} ℃</b></div><div class="row"><span>気圧</span><b>${fmt(w.surface_pressure,0)} hPa</b></div><div class="row"><span>降水量</span><b>${fmt(w.precipitation,1)} mm</b></div><div class="row"><span>雲量</span><b>${fmt(hourly.cloud_cover[idx])} %</b></div>`;
  if(marine&&marine.hourly){
@@ -136,10 +138,10 @@ function render(){
    $("marineDetails").textContent="海洋データ未取得。気象データとは別に取得するよ。";
    setDataStatus("seaLevelStatus","未取得");setDataStatus("sstStatus","未取得");setDataStatus("currentStatus","未取得");
  }
- const d=wx.daily;$("sunDetails").innerHTML=`<div class="row"><span>日の出</span><b>${new Date(d.sunrise[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>日の入り</span><b>${new Date(d.sunset[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>最高気温</span><b>${fmt(d.temperature_2m_max[day],1)} ℃</b></div><div class="row"><span>最低気温</span><b>${fmt(d.temperature_2m_min[day],1)} ℃</b></div>`;
- const visibleFish=names.map((n,i)=>({name:n,value:Math.max(0,Math.min(100,baseScore+offsets[i]))})).filter(f=>target==="all"||f.name===target);
+ $("sunDetails").innerHTML=`<div class="row"><span>日の出</span><b>${new Date(d.sunrise[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>日の入り</span><b>${new Date(d.sunset[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>最高気温</span><b>${fmt(d.temperature_2m_max[day],1)} ℃</b></div><div class="row"><span>最低気温</span><b>${fmt(d.temperature_2m_min[day],1)} ℃</b></div>`;
+ const visibleFish=names.map(n=>({name:n,value:fishScore(w,scoreTime,sunrise,sunset,n)})).filter(f=>target==="all"||f.name===target);
  $("fishList").innerHTML=visibleFish.map(f=>`<div class="fish"><strong>${f.name}</strong><span class="num">${f.value}</span><span class="muted"> / 100・暫定環境指標</span><div class="bar"><i style="width:${f.value}%"></i></div></div>`).join("");
- const hours=Array.from({length:24},(_,i)=>{let j=Math.min(idx+i,hourly.time.length-1);return {time:new Date(hourly.time[j]),score:weatherScore({wind_speed_10m:hourly.wind_speed_10m[j],temperature_2m:hourly.temperature_2m[j],precipitation:hourly.precipitation[j],surface_pressure:hourly.surface_pressure[j]},new Date(hourly.time[j]).getHours())}});
+ const hours=Array.from({length:24},(_,i)=>{let j=Math.min(idx+i,hourly.time.length-1),time=new Date(hourly.time[j]);return {time,score:target==="all"?weatherScore(getWeather(j)):fishScore(getWeather(j),time,sunrise,sunset,target)}});
  drawChart(hours,{sunrise:new Date(d.sunrise[day]),sunset:new Date(d.sunset[day])});$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score}/100</b></div>`).join("");
  const ranked=hours.slice(0,18).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join("");
  $("spotCompare").innerHTML=Object.values(spots).map(s=>`<div class="row"><span>${s.name}</span><span class="tag">同じ広域予報・地点差未評価</span></div>`).join("");
