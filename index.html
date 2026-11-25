@@ -35,7 +35,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 </style>
 </head>
 <body>
-<header><div><div class="brand">FISH <span>ACTIVITY</span></div><div class="sub">SHIKOKU EDITION · 釣行判断サポート</div></div><div class="pill" id="updated">データ取得待ち</div></header>
+<header><div><div class="brand">FISH <span>ACTIVITY</span></div><div class="sub">SHIKOKU EDITION · 釣行判断サポート</div></div><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><div class="pill" id="supabaseStatus">DB接続確認中</div><div class="pill" id="updated">データ取得待ち</div></div></header>
 <main>
   <div class="toolbar">
     <label class="field">都道府県・地域<select id="region"><option value="toyo">愛媛県・東予</option><option value="chuyo">愛媛県・中予</option><option value="nanyo">愛媛県・南予</option><option value="kagawa">香川県</option><option value="tokushima">徳島県</option><option value="kochi">高知県</option></select></label>
@@ -104,6 +104,38 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 </main>
 <footer>FISH ACTIVITY は釣行判断を補助する試作アプリです。魚の活性・釣果を保証しません。気象予報には誤差があり、釣り場の局地的な風・波・潮流を反映しない場合があります。危険な気象・海象時は釣行を中止してください。海洋データはOpen-Meteo Marine APIのモデル予報です。港内の実測潮流・満干潮時刻の連携および公開運用向けの検証は未完了です。</footer>
 <script>
+
+ // Supabase public client configuration. Publishable keys are designed for browser use;
+ // table access remains restricted by the database's Row Level Security policies.
+ const SUPABASE_URL = "https://ggrbwmjvlrptdfwavfbk.supabase.co";
+ const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_8a_cVlnBTqqP9Ngypxw0Eg_rbGeGC0Q";
+ async function checkSupabaseConnection(){
+   const status = $("supabaseStatus");
+   if(!status)return;
+   status.textContent = "DB接続確認中";
+   try{
+     const response = await fetch(SUPABASE_URL + "/rest/v1/fishing_spots?select=id&limit=1", {
+       method:"GET",
+       headers:{
+         "apikey":SUPABASE_PUBLISHABLE_KEY,
+         "Authorization":"Bearer " + SUPABASE_PUBLISHABLE_KEY
+       },
+       cache:"no-store"
+     });
+     if(!response.ok) throw new Error("HTTP " + response.status);
+     await response.json();
+     status.textContent = "DB接続OK";
+     status.style.borderColor = "#65d69a";
+     status.style.color = "#65d69a";
+   }catch(error){
+     status.textContent = "DB接続未確認";
+     status.title = "Supabase接続を確認できなかったよ: " + error.message;
+     status.style.borderColor = "#ff7b7b";
+     status.style.color = "#ff9b9b";
+     console.error("Supabase connection check failed:",error);
+   }
+ }
+
 const regions={
  toyo:{name:"東予",areas:[{id:"kamijima",name:"上島町・しまなみ北部",lat:34.26,lon:133.20},{id:"imabari",name:"今治市・しまなみ",lat:34.066,lon:132.998},{id:"saijo",name:"西条市・東予港",lat:33.93,lon:133.18},{id:"niihama",name:"新居浜市",lat:33.97,lon:133.28},{id:"shikokuchuo",name:"四国中央市",lat:33.98,lon:133.55}],fish:["アジ","サバ","イワシ","サヨリ","メバル","カサゴ","チヌ","グレ","マダイ","アオリイカ","タチウオ","キス","カレイ","シーバス","ヒラメ","青物","サワラ","ハゼ","タコ"]},
  chuyo:{name:"中予",areas:[{id:"matsuyama",name:"松山市・北条〜三津浜",lat:33.85,lon:132.70},{id:"masaki",name:"伊予市・松前町",lat:33.78,lon:132.70},{id:"futami",name:"伊予市・双海",lat:33.66,lon:132.60}],fish:["アジ","サバ","イワシ","サヨリ","メバル","カサゴ","チヌ","グレ","マダイ","アオリイカ","タチウオ","キス","カレイ","シーバス","ヒラメ","青物","イサキ","ハゼ"]},
@@ -494,6 +526,6 @@ async function load(force=false){
 }
 $("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
 $("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("area").addEventListener("change",()=>{updateArea();load(true)});$("spotType").addEventListener("change",()=>{updateArea();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderSpotRecommendations();renderFishingAdvice();render()});
-document.addEventListener("click",e=>{const b=e.target.closest("[data-recommend-spot]");if(!b)return;const name=b.getAttribute("data-recommend-spot"),list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(!p)return;$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const opt=[...$("spot").options].find(o=>o.textContent===name);if(opt){$("spot").value=opt.value;load(true);}});$("day").addEventListener("change",()=>{render();$("plannerResults").innerHTML='<p class="small">日付を変更したよ。「おすすめを検索」を押して再計算してね。</p>'});$("runPlanner").addEventListener("click",runTripPlanner);$("plannerFish").innerHTML='<option value="all">全魚種</option>'+fishNames.map(n=>'<option value="'+n+'">'+n+'</option>').join("");$("plannerMode").addEventListener("change",()=>{$("plannerFish").disabled=$("plannerMode").value==="spot";});$("area").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("region").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("target").addEventListener("change",()=>{$("plannerFish").value=$("target").value==="all"?"all":$("target").value;});document.addEventListener("click",e=>{const b=e.target.closest("[data-plan-spot]");if(!b)return;const name=b.dataset.planSpot,fish=b.dataset.planFish,list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(p){$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const o=[...$("spot").options].find(x=>x.textContent===name);if(o)$("spot").value=o.value;$("target").value=fish;renderSpotRecommendations();load(true);}});window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
+document.addEventListener("click",e=>{const b=e.target.closest("[data-recommend-spot]");if(!b)return;const name=b.getAttribute("data-recommend-spot"),list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(!p)return;$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const opt=[...$("spot").options].find(o=>o.textContent===name);if(opt){$("spot").value=opt.value;load(true);}});$("day").addEventListener("change",()=>{render();$("plannerResults").innerHTML='<p class="small">日付を変更したよ。「おすすめを検索」を押して再計算してね。</p>'});$("runPlanner").addEventListener("click",runTripPlanner);$("plannerFish").innerHTML='<option value="all">全魚種</option>'+fishNames.map(n=>'<option value="'+n+'">'+n+'</option>').join("");$("plannerMode").addEventListener("change",()=>{$("plannerFish").disabled=$("plannerMode").value==="spot";});$("area").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("region").addEventListener("change",()=>{$("plannerResults").innerHTML='<p class="small">エリアを変更したよ。「おすすめを検索」を押してね。</p>'});$("target").addEventListener("change",()=>{$("plannerFish").value=$("target").value==="all"?"all":$("target").value;});document.addEventListener("click",e=>{const b=e.target.closest("[data-plan-spot]");if(!b)return;const name=b.dataset.planSpot,fish=b.dataset.planFish,list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(p){$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const o=[...$("spot").options].find(x=>x.textContent===name);if(o)$("spot").value=o.value;$("target").value=fish;renderSpotRecommendations();load(true);}});window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();checkSupabaseConnection();load();
 </script>
 </body></html>
