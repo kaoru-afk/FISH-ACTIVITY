@@ -133,6 +133,48 @@ function evaluateFish(w,mp,date,target){const p=fishProfiles[target],parts=[],mi
 function getMarinePoint(index){if(!marine||!marine.hourly)return {};const h=marine.hourly;const targetTime=wx&&wx.hourly&&wx.hourly.time?wx.hourly.time[index]:null;let i=targetTime&&h.time?h.time.indexOf(targetTime):-1;if(i<0)i=Math.min(index,(h.time||[]).length-1);const v=k=>h[k]&&Number.isFinite(h[k][i])?h[k][i]:null;return {sea_surface_temperature:v("sea_surface_temperature"),wave_height:v("wave_height")};}
 function grade(n){return n>=75?"環境条件は良好":n>=60?"やや良好":n>=45?"標準的":n>=30?"やや厳しめ":"厳しめ"}
 function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row"><span>${a}</span><b>${b}</b></div>`).join("")}
+// 岸釣りを前提に、魚種別の道具・操作を具体化した提案。重さは水深・流れ・風で調整する目安。
+function buildFishingAdvice(target,w,mp){
+ const profiles={
+ "青物":{
+  method:"表層〜中層を広く探す。まず遠投して着底、または狙う層まで沈め、ワンピッチジャーク5〜10回＋フォールを繰り返す。反応がなければただ巻きの速度を変える。ナブラ・鳥・ベイトの位置を優先。",
+  gear:"メタルジグ：30〜60g（まず40g）。遠投重視は細身、フォールで食わせるならセンターバランス。カラーは日中の澄み潮＝ブルー／シルバー、濁り・曇天＝ピンク／アカキン。フックは青物対応のアシストフック。"
+ },
+ "サワラ":{
+  method:"表層〜中層を速めのただ巻きで探り、時々短いジャークを入れる。ベイトの層が分かればその少し下を通す。歯で切られやすいので、掛けた後は急なポンピングを避けて一定テンション。",
+  gear:"細身のキャスティングメタルジグ30〜50g、または飛距離の出るシンキングミノー。まず40g前後。カラーはブルピン／イワシ系、濁り時はアカキン。歯対策に太めのフロロリーダー（目安40〜60lb）を短めに接続。"
+ },
+ "アオリイカ":{
+  method:"基本はキャスト後に着底を確認し、2〜3回シャクリ上げてフォールで抱かせる。フォール中は糸ふけを取りすぎず、ラインの変化を見る。藻場の際・かけ上がり・岩礁帯を狙い、根掛かりしやすい場所では底を取り直しすぎない。",
+  gear:"エギ：3.5号を基準。浅場・風弱め・小型狙いは2.5〜3号、深場・流れが速い・風で沈みにくい時は3.5号（必要ならシンカー追加）。カラーは澄み潮・日中＝ナチュラルなイワシ／オリーブ、濁り・曇天＝ピンク／オレンジ、夜・濁りが強い時＝夜光系を状況に応じて。"
+ },
+ "カサゴ":{
+  method:"岸壁際・敷石・捨て石・根の周りを中心に、底まで落として小さく跳ね上げ、数秒止める。反応がなければ少し移動。根掛かりを避けるため、底を引きずらずリフト＆フォール。",
+  gear:"ワーム：2〜3インチのホッグ系／シャッド系。ジグヘッド3〜10gを基準に、水深・風・流れで調整。根掛かりが多い場所はテキサスリグ（シンカー5〜14g目安）＋オフセットフック。カラーは夜・濁り＝オレンジ／赤系、日中・澄み潮＝茶／グリーン系。"
+ },
+ "マダイ":{
+  method:"岸からは潮通しのよい堤防先端・かけ上がり・砂地と岩礁の境目を狙う。底付近を中心に、ルアーを底から少し浮かせてゆっくり巻く。根掛かりが多い場所では底を取り直す回数を減らす。",
+  gear:"岸釣り用の選択肢：小型メタルジグ20〜40g、または甲殻類・小魚系ワーム3〜4インチ＋ジグヘッド10〜30g。底を取りやすい最軽量から開始。カラーは澄み潮＝ナチュラル系、濁り＝オレンジ／赤金系。船用タイラバの号数・重さとは分けて考える。"
+ },
+ "ヒラメ":{
+  method:"砂地・砂利底、港の船道のかけ上がり、ベイトが寄る場所を狙う。ミノーは中層〜底上を一定速度で巻き、ワームは底を取りながらリフト＆フォール。着底後すぐ巻き始め、底を引きずらない。",
+  gear:"ワーム：4〜5インチのシャッドテール＋ジグヘッド14〜28gを基準。遠投や深場は重く、浅場は軽く。ミノーなら110〜140mm・20〜30g程度のシンキング／フローティングを水深で使い分け。カラーは澄み潮＝イワシ／銀、濁り＝ゴールド／チャート。"
+ }
+ };
+ const order=target==="all"?Object.keys(profiles):[target];
+ const wind=Number.isFinite(w.wind_speed_10m)?w.wind_speed_10m:null;
+ const wave=mp&&Number.isFinite(mp.wave_height)?mp.wave_height:null;
+ const conditions=[];
+ if(wind!==null)conditions.push(wind>=10?"風が強め。軽いエギ・ルアーは操作しにくいので、風裏へ移動するか重さを上げる。":wind>=7?"風の影響が出やすい。ラインが流される場合は少し重くするか風裏を選ぶ。":"風は比較的弱め。軽めの仕掛けも扱いやすい目安。");
+ else conditions.push("風速予報がないため、現地の風を確認して重さを調整。");
+ if(wave!==null)conditions.push(wave>=1.5?"波高モデルは高め。堤防先端・外向きは無理せず、足場の安全を最優先。":wave>=.8?"波・うねりの影響に注意。外向きの低い足場は避ける。":"波高モデル上は比較的穏やかな目安。ただし港内・足元の実際の波とは異なる。");
+ else conditions.push("波高モデル値なし。現地のうねり・越波を必ず確認。");
+ const note='<p class="small"><b>当日の調整：</b>'+conditions.join(" ")+'</p>';
+ const method=order.map(n=>'<div class="data-box"><strong>'+n+'：狙い方</strong><p>'+profiles[n].method+'</p></div>').join("");
+ const tackle=order.map(n=>'<div class="data-box"><strong>'+n+'：道具の目安</strong><p>'+profiles[n].gear+'</p></div>').join("");
+ const caveat='<p class="small">※岸釣りを想定した標準的な出発点。号数・重さ・カラーは水深、底質、潮の速さ、ベイト、当日の視認性で調整してね。釣果データから自動最適化した値ではないよ。潮流・ベイト情報は現在未接続。</p>';
+ return {method:method+note+caveat,tackle:tackle+note+caveat};
+}
 function render(){
  if(!wx)return;
  const day=+$("day").value, spot=spots[$("spot").value], target=$("target").value;
@@ -175,8 +217,9 @@ function render(){
  drawChart(hours,{sunrise:new Date(d.sunrise[day]),sunset:new Date(d.sunset[day])});$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score}/100</b></div>`).join("");
  const ranked=hours.slice(0,18).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join("");
  $("spotCompare").innerHTML=Object.values(spots).map(s=>`<div class="row"><span>${s.name}</span><span class="tag">同じ広域予報・地点差未評価</span></div>`).join("");
- $("methodAdvice").innerHTML=target==="all"?"魚種を指定すると、その魚に合わせた釣り方の提案を表示するよ。":target==="青物"||target==="サワラ"?"メタルジグのただ巻き・ワンピッチジャークを候補に。ベイトの有無とナブラを観察してね。":"対象魚の習性に合わせて、底層・中層・表層を探り分けよう。潮汐データ接続後に精度を高めるよ。";
- $("lureAdvice").innerHTML=target==="all"?"魚種を指定すると、ルアー・仕掛けの提案を表示するよ。":target==="青物"||target==="サワラ"?"40g前後のメタルジグを基準に、風・水深・流れで重さを調整。":"釣り場の水深・底質・ベイトに合わせて選択。現状は参考提案。";
+ const advice=buildFishingAdvice(target,w,marinePoint);
+ $("methodAdvice").innerHTML=advice.method;
+ $("lureAdvice").innerHTML=advice.tackle;
  $("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
 }
 function drawChart(data,solar={}){const c=$("hourChart"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=190*dpr;ctx.scale(dpr,dpr);let W=r.width,H=190,left=30,right=W-8,top=20,bottom=H-20;ctx.clearRect(0,0,W,H);const first=data[0].time.getTime(),last=data[data.length-1].time.getTime(),xAt=t=>left+(t-first)/(last-first)*(right-left);const band=(date,before,after,color,label)=>{if(!(date instanceof Date)||!Number.isFinite(date.getTime()))return;let x1=Math.max(left,xAt(date.getTime()-before*60000)),x2=Math.min(right,xAt(date.getTime()+after*60000));if(x2<=x1)return;ctx.fillStyle=color;ctx.fillRect(x1,top,x2-x1,bottom-top);ctx.fillStyle="#f5d49b";ctx.font="10px system-ui";ctx.fillText(label,Math.max(left+2,Math.min(x1+3,right-42)),top+11);ctx.strokeStyle=color;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(xAt(date.getTime()),top);ctx.lineTo(xAt(date.getTime()),bottom);ctx.stroke();ctx.setLineDash([])};band(solar.sunrise,60,30,"rgba(233,173,84,.16)","朝マズメ");band(solar.sunset,30,60,"rgba(216,139,72,.16)","夕マズメ");ctx.strokeStyle="#29485d";ctx.fillStyle="#9db4c4";ctx.font="10px system-ui";for(let y=0;y<=100;y+=25){let py=bottom-y/100*(bottom-top);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.fillText(y,5,py+3)}ctx.strokeStyle="#42d4d8";ctx.lineWidth=2;ctx.beginPath();data.forEach((p,i)=>{let x=xAt(p.time.getTime()),y=bottom-p.score/100*(bottom-top);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle="#9db4c4";for(let i=0;i<data.length;i+=4){let x=xAt(data[i].time.getTime());ctx.fillText(data[i].time.toLocaleTimeString("ja-JP",{hour:"2-digit"}),x-8,H-4)}}
