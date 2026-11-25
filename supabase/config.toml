@@ -1,0 +1,2 @@
+[functions.ingest-forecast]
+verify_jwt = true
