@@ -13,6 +13,7 @@ header{padding:22px max(18px,calc((100vw - 1180px)/2));border-bottom:1px solid v
 .pill{border:1px solid #386079;border-radius:99px;padding:7px 11px;color:#b9d7e7;font-size:12px}
 main{max-width:1180px;margin:auto;padding:22px 18px 50px}
 .toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:18px}
+.recommend-card{margin:0 0 16px}.recommend-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.recommend-item{background:rgba(7,27,43,.55);border:1px solid var(--line);border-radius:12px;padding:12px}.recommend-item strong{display:block;margin-bottom:5px}.recommend-item .why{font-size:12px;color:var(--muted);min-height:34px}.recommend-item button{margin-top:9px;padding:8px 11px;font-size:12px}.recommend-score{font-size:11px;color:var(--cyan);margin-top:4px}
 .field{display:grid;gap:6px;color:var(--muted);font-size:12px}.field select,.field input{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;min-width:170px}
 button{cursor:pointer;background:var(--cyan);border:0;border-radius:10px;padding:11px 15px;font-weight:750;color:#06202d}
 .grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}.card{background:linear-gradient(145deg,rgba(19,48,68,.96),rgba(13,37,55,.96));border:1px solid var(--line);border-radius:17px;padding:17px;min-width:0;box-shadow:0 8px 24px #0002}
@@ -43,6 +44,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <label class="field">予測日<select id="day"><option value="0">今日</option><option value="1">明日</option><option value="2">明後日</option><option value="3">3日後</option><option value="4">4日後</option><option value="5">5日後</option><option value="6">6日後</option></select></label>
     <button id="refresh">気象データを更新</button>
   </div>
+  <section class="card recommend-card" id="spotRecommendations" aria-live="polite"><h3>🐟 この魚種におすすめの釣り場</h3><div id="recommendationList" class="recommend-list"><p class="small">魚種を選ぶと、このエリアの釣り場から候補を表示するよ。</p></div><p class="small">※魚種の生態・釣り場タイプ・地形キーワードをもとにした候補。釣果や当日の回遊を保証するものではないよ。</p></section>
   <p class="small">釣り場候補は公開されている釣り場情報をもとに拡充中の一覧だよ。座標は予報用の近似値で、釣り座の正確な位置ではないよ。地磯・磯場は公開情報で名称を確認できた地点に加え、海岸沿いの岩場候補も含むため、釣行前に地形・進入路・釣り可否を必ず確認してね。沖磯は渡船が必要な場所として別表示するよ。釣り禁止・立入禁止・駐車ルールは変更されることがあるので、現地掲示と管理者の案内を必ず確認してね。参考：<a class="source-link" href="https://s.turihiroba.com/ehime.html" target="_blank" rel="noopener">愛媛県釣り場マップ</a> ／ <a class="source-link" href="https://tsurineo.com/a/toyo" target="_blank" rel="noopener">東予の釣り場一覧</a> ／ <a class="source-link" href="https://tsurineo.com/a/matsuyama" target="_blank" rel="noopener">松山の釣り場一覧</a> ／ <a class="source-link" href="https://www.seiyojikan.jp/activities/activities4/" target="_blank" rel="noopener">西予市のフィッシングポイント</a> ／ <a class="source-link" href="https://tsuriba.info/spotlistmap/38" target="_blank" rel="noopener">愛媛の釣り場マップ（67地点）</a> ／ <a class="source-link" href="https://xn--nbk170jyl2b.net/ehime/" target="_blank" rel="noopener">愛媛県の釣り場一覧（279地点）</a></p>
 
   <section class="grid">
@@ -143,7 +145,53 @@ function updateArea(){
  filtered.forEach((p,i)=>{const id=areaId+"_spot_"+i;spots[id]={id,name:p[0],lat:p[1],lon:p[2]};});
  $("spot").innerHTML=filtered.map((p,i)=>'<option value="'+areaId+'_spot_'+i+'">'+p[0]+'</option>').join("");
  $("target").innerHTML='<option value="all">このエリアの全魚種</option>'+getRegionFish().map(n=>'<option value="'+n+'">'+n+'</option>').join("");
+ renderSpotRecommendations();
 }
+function recommendationProfile(fish){
+ const profiles={
+ "青物":{types:{rocky:5,offshore:5,port:3,surf:3},words:["鼻","岬","瀬","外海","波止","新港"],why:"潮通しのよい岬・瀬・外向きの岸壁を優先"},
+ "サワラ":{types:{rocky:5,offshore:5,port:3,surf:3},words:["鼻","岬","瀬","外海","波止","新港"],why:"潮通しと回遊ルートを意識した候補"},
+ "カサゴ":{types:{rocky:6,offshore:3,port:2},words:["磯","岩","鼻","瀬","石波止"],why:"岩礁・捨て石・障害物がありそうな場所を優先"},
+ "メバル":{types:{rocky:5,port:4},words:["磯","岩","港","波止","石波止"],why:"岩礁帯や港周辺の障害物を優先"},
+ "ハタ類":{types:{rocky:6,offshore:5,port:2},words:["磯","岩","鼻","瀬","岬"],why:"根の荒い岩礁帯や沖磯を優先"},
+ "イシダイ":{types:{rocky:6,offshore:6,port:1},words:["磯","岩","鼻","岬","瀬"],why:"岩礁帯・沖磯を優先"},
+ "グレ":{types:{rocky:6,offshore:5,port:2},words:["磯","岩","鼻","岬","瀬"],why:"潮通しのある磯・岩礁帯を優先"},
+ "チヌ":{types:{rocky:4,port:4,river:3},words:["磯","岩","港","河口","波止"],why:"磯・港湾部・河口周辺を候補に"},
+ "アオリイカ":{types:{rocky:5,port:4,surf:2},words:["磯","岩","藻","岬","港"],why:"藻場や岩礁が期待できる沿岸を優先"},
+ "アジ":{types:{port:5,rocky:3},words:["港","波止","岸壁","桟橋"],why:"港・波止など足場のあるポイントを優先"},
+ "サバ":{types:{port:4,rocky:3,surf:2},words:["港","波止","岸壁","岬"],why:"回遊魚が接岸しやすい港・潮通しのよい場所を候補に"},
+ "イワシ":{types:{port:4,rocky:3,surf:2},words:["港","波止","岸壁","桟橋"],why:"ベイトの回遊を待ちやすい港・波止を候補に"},
+ "サヨリ":{types:{port:5,surf:2,rocky:2},words:["港","波止","岸壁"],why:"水面を狙いやすい港・波止を優先"},
+ "マダイ":{types:{rocky:5,offshore:5,port:2},words:["磯","鼻","岬","瀬","沖"],why:"潮通しのある磯・沖磯を優先"},
+ "イサキ":{types:{rocky:5,offshore:6,port:1},words:["磯","鼻","岬","瀬","沖"],why:"潮通しのある磯・沖磯を優先"},
+ "ヒラメ":{types:{surf:6,river:4,port:2},words:["海岸","浜","河口","砂","新港"],why:"砂地の海岸・河口・砂底が隣接する港を候補に"},
+ "キス":{types:{surf:6,port:2},words:["海岸","浜","砂","サーフ"],why:"砂浜・砂地の海岸を優先"},
+ "カレイ":{types:{surf:5,port:4},words:["海岸","浜","港","波止","砂"],why:"砂泥底が期待できる海岸・港を候補に"},
+ "シーバス":{types:{river:6,port:4,surf:3},words:["河口","川","港","新港","浜"],why:"河口・港湾部・流れ込みを優先"},
+ "ハゼ":{types:{river:6,port:2},words:["河口","川","水門"],why:"河口や汽水域を優先"},
+ "タチウオ":{types:{port:5,rocky:3},words:["港","波止","岸壁","新港"],why:"水深のある港・波止を優先"},
+ "タコ":{types:{rocky:5,port:4},words:["磯","岩","石波止","港"],why:"岩礁や捨て石など隠れ場所のある場所を優先"}
+ };
+ return profiles[fish]||{types:{port:3,rocky:3,surf:2,river:2,offshore:2},words:[],why:"この魚種の一般的な釣り場タイプから候補を選定"};
+}
+function renderSpotRecommendations(){
+ const fish=$("target").value, areaId=$("area").value, list=areaFishSpots[areaId]||[];
+ const box=$("recommendationList"); if(!box)return;
+ if(fish==="all"){box.innerHTML='<p class="small">対象魚を選ぶと、このエリアの釣り場からおすすめ候補を表示するよ。</p>';return;}
+ const profile=recommendationProfile(fish);
+ const ranked=list.map(p=>{
+  const type=p[3]||spotTypeByName[p[0]]||"port";
+  let score=profile.types[type]||0;
+  const matched=profile.words.filter(w=>p[0].includes(w));
+  score+=Math.min(2,matched.length)*0.8;
+  if(type==="offshore")score-=0.2;
+  return {name:p[0],type,score,why:matched.length?profile.why+"。名称から「"+matched.slice(0,2).join("・")+"」を含む地点を加味":profile.why};
+ }).filter(x=>x.score>0).sort((a,b)=>b.score-a.score||a.name.localeCompare(b.name,"ja")).slice(0,3);
+ if(!ranked.length){box.innerHTML='<p class="small">このエリアには候補がまだ登録されていないよ。</p>';return;}
+ box.innerHTML=ranked.map((p,i)=>'<article class="recommend-item"><strong>'+(i+1)+'. '+escapeHtml(p.name)+'</strong><div class="why">'+escapeHtml(p.why)+'</div><div class="recommend-score">釣り場タイプ適合：'+(p.score>=5?"高め":p.score>=3?"候補":"参考")+'</div><button type="button" data-recommend-spot="'+escapeHtml(p.name)+'">この釣り場を選ぶ</button></article>').join("");
+}
+function escapeHtml(value){return String(value).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]));}
+
 let wx=null, marine=null;
 const CACHE_TTL=10*60*1000;
 let activeController=null;
@@ -352,6 +400,7 @@ async function load(force=false){
  }
 }
 $("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
-$("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("area").addEventListener("change",()=>{updateArea();load(true)});$("spotType").addEventListener("change",()=>{updateArea();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderFishingAdvice();render()});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
+$("refresh").addEventListener("click",()=>load(true));$("region").addEventListener("change",()=>{updateRegion();load(true)});$("area").addEventListener("change",()=>{updateArea();load(true)});$("spotType").addEventListener("change",()=>{updateArea();load(true)});$("spot").addEventListener("change",()=>load(true));$("target").addEventListener("change",()=>{renderSpotRecommendations();renderFishingAdvice();render()});
+document.addEventListener("click",e=>{const b=e.target.closest("[data-recommend-spot]");if(!b)return;const name=b.getAttribute("data-recommend-spot"),list=areaFishSpots[$("area").value]||[],p=list.find(x=>x[0]===name);if(!p)return;$("spotType").value=p[3]||spotTypeByName[p[0]]||"port";updateArea();const opt=[...$("spot").options].find(o=>o.textContent===name);if(opt){$("spot").value=opt.value;load(true);}});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});updateRegion();renderFishingAdvice();load();
 </script>
 </body></html>
