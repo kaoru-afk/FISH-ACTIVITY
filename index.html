@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#071b2b">
+<title>FISH ACTIVITY | 今治</title>
+<style>
+:root{--bg:#071b2b;--panel:#10283b;--panel2:#16344a;--line:#29485d;--text:#edf6fb;--muted:#9db4c4;--cyan:#42d4d8;--green:#65d69a;--yellow:#ffd166;--red:#ff7b7b}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#071b2b,#0a2436 55%,#081a29);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+header{padding:22px max(18px,calc((100vw - 1180px)/2));border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.brand{font-size:22px;font-weight:850;letter-spacing:.08em}.brand span{color:var(--cyan)}.sub{color:var(--muted);font-size:12px;margin-top:3px}
+.pill{border:1px solid #386079;border-radius:99px;padding:7px 11px;color:#b9d7e7;font-size:12px}
+main{max-width:1180px;margin:auto;padding:22px 18px 50px}
+.toolbar{display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:18px}
+.field{display:grid;gap:6px;color:var(--muted);font-size:12px}.field select,.field input{background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font-size:14px;min-width:170px}
+button{cursor:pointer;background:var(--cyan);border:0;border-radius:10px;padding:11px 15px;font-weight:750;color:#06202d}
+.grid{display:grid;grid-template-columns:1.3fr 1fr;gap:14px}.card{background:linear-gradient(145deg,rgba(19,48,68,.96),rgba(13,37,55,.96));border:1px solid var(--line);border-radius:17px;padding:17px;min-width:0;box-shadow:0 8px 24px #0002}
+.card h2,.card h3{margin:0 0 12px}.muted{color:var(--muted)}.small{font-size:12px;color:var(--muted);line-height:1.6}
+.hero{display:flex;align-items:center;gap:22px;flex-wrap:wrap}.score{font-size:58px;line-height:1;font-weight:850;letter-spacing:-.05em}.score small{font-size:17px;color:var(--muted);letter-spacing:0}.status{font-weight:750;color:var(--yellow);margin-top:8px}
+.notice{background:#382f1a;border:1px solid #79612b;color:#ffe5a3;padding:10px 12px;border-radius:10px;font-size:12px;line-height:1.55;margin-top:13px}
+.metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-top:16px}.metric{background:#0a2132;border:1px solid #203e53;border-radius:12px;padding:11px}.metric b{display:block;font-size:18px;margin-top:5px}.metric span{font-size:11px;color:var(--muted)}
+.tabs{display:flex;gap:7px;overflow:auto;padding:16px 0}.tab{white-space:nowrap;background:#10283b;border:1px solid var(--line);color:#c3d5df;border-radius:99px;padding:9px 13px;font-size:12px}.tab.active{background:var(--cyan);color:#06202d;border-color:var(--cyan);font-weight:800}
+.panel{display:none}.panel.active{display:block}.two{display:grid;grid-template-columns:1fr 1fr;gap:14px}.three{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #244358}.row:last-child{border:0}
+.tag{font-size:11px;border:1px solid #3b6076;border-radius:99px;padding:4px 8px;color:#c8e1ed}
+.bar{height:8px;background:#29485d;border-radius:99px;overflow:hidden;margin-top:7px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#42d4d8,#65d69a);border-radius:99px}
+.chart{width:100%;height:190px;background:#0a2132;border-radius:12px;border:1px solid #203e53}
+.fishlist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.fish{background:#0a2132;border:1px solid #203e53;border-radius:12px;padding:12px}
+.fish strong{display:block;margin-bottom:6px}.fish .num{font-size:22px;font-weight:800}
+.recommend{border-left:3px solid var(--cyan);padding:9px 12px;background:#0a2132;border-radius:0 10px 10px 0;margin:9px 0}
+footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-size:11px;line-height:1.7}
+@media(max-width:760px){.grid,.two{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}.score{font-size:48px}.toolbar .field{flex:1}.field select{width:100%}}
+</style>
+</head>
+<body>
+<header><div><div class="brand">FISH <span>ACTIVITY</span></div><div class="sub">IMABARI EDITION · 釣行判断サポート</div></div><div class="pill" id="updated">データ取得待ち</div></header>
+<main>
+  <div class="toolbar">
+    <label class="field">釣り場<select id="spot"><option value="tomita">富田新港</option><option value="kikuma">菊間港</option><option value="matsugasaki">松ヶ崎</option><option value="imabari">今治港</option><option value="ohama">大浜周辺</option></select></label>
+    <label class="field">対象魚<select id="target"><option value="青物">青物（ブリ・ハマチ）</option><option value="サワラ">サワラ・サゴシ</option><option value="アオリイカ">アオリイカ</option><option value="カサゴ">カサゴ</option><option value="マダイ">マダイ</option><option value="ヒラメ">ヒラメ・マゴチ</option></select></label>
+    <label class="field">予測日<select id="day"><option value="0">今日</option><option value="1">明日</option><option value="2">明後日</option></select></label>
+    <button id="refresh">気象データを更新</button>
+  </div>
+
+  <section class="grid">
+    <div class="card">
+      <div class="muted small">選択地点の環境コンディション指標（試作）</div>
+      <div class="hero" style="margin-top:12px"><div><div class="score" id="score">--<small> / 100</small></div><div class="status" id="grade">データ取得中</div></div><div class="small" id="summary">気象情報を取得して評価するよ。</div></div>
+      <div class="notice" id="caveat">この数値は魚の実際の活性・釣果確率ではなく、取得できた環境データによる試作指標だよ。潮汐・潮流・水温の連携前は暫定評価。</div>
+      <div class="metrics">
+        <div class="metric"><span>風速</span><b id="wind">--</b></div><div class="metric"><span>気温</span><b id="temp">--</b></div><div class="metric"><span>気圧</span><b id="pressure">--</b></div><div class="metric"><span>降水量</span><b id="rain">--</b></div>
+      </div>
+    </div>
+    <div class="card"><h3>釣行判断メモ</h3><div id="reasons"><div class="row"><span class="muted">データ取得後に表示</span><span class="tag">待機中</span></div></div><div class="small" style="margin-top:10px">風・雨・気温・時間帯をもとにした簡易コメント。安全面では現地の突風・波・雷を必ず確認してね。</div></div>
+  </section>
+
+  <nav class="tabs" id="tabs">
+    <button class="tab active" data-tab="overview">総合判定</button><button class="tab" data-tab="forecast">24時間予測</button><button class="tab" data-tab="species">魚種別分析</button><button class="tab" data-tab="tide">潮汐分析</button><button class="tab" data-tab="weather">気象分析</button><button class="tab" data-tab="best">おすすめ時間</button><button class="tab" data-tab="spots">釣り場比較</button><button class="tab" data-tab="advice">釣り方提案</button>
+  </nav>
+
+  <section class="panel active" id="overview"><div class="two">
+    <div class="card"><h3>現在の評価要因</h3><div id="factorRows" class="small">データ取得後に表示</div></div>
+    <div class="card"><h3>今日の釣行ポイント</h3><div id="overviewAdvice" class="small">気象データ取得後に表示</div></div>
+  </div></section>
+
+  <section class="panel" id="forecast"><div class="card"><h3>時間別・環境指標の推移</h3><canvas class="chart" id="hourChart"></canvas><p class="small">気象予報を使った暫定指標。潮汐・水温を含む魚種別の予測ではないよ。</p><div id="hourList"></div></div></section>
+
+  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><p class="small">魚種ごとの季節性・水温・潮流の補正は今後追加。現段階では共通の気象条件を中心とした参考表示。</p></div></section>
+
+  <section class="panel" id="tide"><div class="two">
+<div class="card"><h3>海洋コンディション</h3><div id="marineDetails" class="small">海洋データ取得中</div>
+<div class="notice">海面水位は潮位そのものではなく、全球平均海面基準のモデル値。海流・水温も約8km格子の予報で、港内や岸際の実測値ではないよ。航海・安全判断には使わないでね。</div></div>
+<div class="card"><h3>潮汐・潮回りの接続状況</h3>
+<div class="row"><span>海面水位（モデル）</span><span class="tag" id="seaLevelStatus">取得待ち</span></div>
+<div class="row"><span>海水温（モデル）</span><span class="tag" id="sstStatus">取得待ち</span></div>
+<div class="row"><span>海流（モデル）</span><span class="tag" id="currentStatus">取得待ち</span></div>
+<div class="row"><span>満潮・干潮時刻／大潮等</span><span class="tag">別APIが必要</span></div>
+<div class="row"><span>港内の局地的な潮流</span><span class="tag">未取得</span></div>
+<p class="small">次段階では海上保安庁「海しるAPI」の潮汐・潮流データを調査して追加する。</p></div></div></section>
+
+  <section class="panel" id="weather"><div class="two"><div class="card"><h3>気象データ</h3><div id="weatherDetails" class="small">取得中</div></div><div class="card"><h3>日の出・日の入り</h3><div id="sunDetails" class="small">取得中</div><h3 style="margin-top:20px">データ提供元</h3><p class="small">Open-Meteo（気象予報API）。地点は選択した今治市本土内の代表座標。</p></div></div></section>
+
+  <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">現段階は気象条件と朝夕の時間帯だけによる暫定ランキング。</p><div id="bestTimes"></div></div></section>
+
+  <section class="panel" id="spots"><div class="card"><h3>今治市本土・釣り場比較</h3><p class="small">同一の広域気象予報を参照する簡易比較。釣り場固有の風・波・潮流を表すものではないよ。</p><div id="spotCompare"></div></div></section>
+
+  <section class="panel" id="advice"><div class="two"><div class="card"><h3>おすすめの釣り方</h3><div id="methodAdvice" class="small">データ取得後に表示</div></div><div class="card"><h3>おすすめルアー・注意点</h3><div id="lureAdvice" class="small">データ取得後に表示</div></div></div></section>
+</main>
+<footer>FISH ACTIVITY は釣行判断を補助する試作アプリです。魚の活性・釣果を保証しません。気象予報には誤差があり、釣り場の局地的な風・波・潮流を反映しない場合があります。危険な気象・海象時は釣行を中止してください。海洋データはOpen-Meteo Marine APIのモデル予報です。港内の実測潮流・満干潮時刻の連携および公開運用向けの検証は未完了です。</footer>
+<script>
+const spots={tomita:{name:"富田新港",lat:34.055,lon:133.018},kikuma:{name:"菊間港",lat:34.035,lon:132.846},matsugasaki:{name:"松ヶ崎",lat:34.075,lon:132.91},imabari:{name:"今治港",lat:34.066,lon:132.998},ohama:{name:"大浜周辺",lat:34.105,lon:133.02}};
+let wx=null, marine=null;
+const CACHE_TTL=10*60*1000;
+let activeController=null;
+const $=id=>document.getElementById(id);
+function cacheRead(key){try{const v=JSON.parse(localStorage.getItem(key)||"null");return v&&Date.now()-v.savedAt<CACHE_TTL?v.data:null}catch(_){return null}}
+function cacheWrite(key,data){try{localStorage.setItem(key,JSON.stringify({savedAt:Date.now(),data}))}catch(_){}} 
+function setDataStatus(id,text){const el=$(id);if(el)el.textContent=text}
+const fmt=(v,d=0)=>Number.isFinite(v)?v.toFixed(d):"--";
+function currentHour(){return new Date().getHours()}
+function timeFactor(h){let peaks=[5,6,7,16,17,18,19];return peaks.includes(h)?18:(h>=4&&h<=9||h>=15&&h<=20?12:0)}
+function weatherScore(w,h){let s=50;let wind=w.wind_speed_10m??10;let temp=w.temperature_2m??15;let rain=w.precipitation??0;let pressure=w.surface_pressure??1013;
+s+=wind<=4?12:wind<=7?6:wind<=10?0:wind<=14?-12:-25;
+s+=rain<0.2?5:rain<1?-2:-12;s+=temp>=12&&temp<=24?8:temp<5||temp>30?-8:2;s+=pressure>=1005&&pressure<=1025?4:-3;s+=timeFactor(h);
+return Math.max(0,Math.min(100,Math.round(s)))}
+function grade(n){return n>=75?"環境条件は良好":n>=60?"やや良好":n>=45?"標準的":n>=30?"やや厳しめ":"厳しめ"}
+function setRows(id,items){$(id).innerHTML=items.map(([a,b])=>`<div class="row"><span>${a}</span><b>${b}</b></div>`).join("")}
+function render(){
+ if(!wx)return;
+ const day=+$("day").value, spot=spots[$("spot").value], target=$("target").value;
+ const idx=day===0?0:day===1?24:48, hourly=wx.hourly;
+ const w={wind_speed_10m:hourly.wind_speed_10m[idx],temperature_2m:hourly.temperature_2m[idx],precipitation:hourly.precipitation[idx],surface_pressure:hourly.surface_pressure[idx]};
+ const score=weatherScore(w,day===0?currentHour():12);
+ $("score").innerHTML=score+'<small> / 100</small>';$("grade").textContent=grade(score);$("summary").textContent=`${spot.name}の気象条件をもとにした暫定評価。対象：${target}`;
+ $("wind").textContent=fmt(w.wind_speed_10m,1)+" m/s";$("temp").textContent=fmt(w.temperature_2m,1)+" ℃";$("pressure").textContent=fmt(w.surface_pressure,0)+" hPa";$("rain").textContent=fmt(w.precipitation,1)+" mm";
+ const reasons=[["風",w.wind_speed_10m<=7?"比較的穏やか":w.wind_speed_10m<=10?"やや強め":"強風に注意"],["降水",w.precipitation<0.2?"少ない":"雨に注意"],["気温",w.temperature_2m+" ℃"],["評価",grade(score)]];
+ setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["時間帯",timeFactor(currentHour())?"朝夕の時合い候補":"マヅメ以外"],["潮汐","未取得"],["水温","未取得"]]);
+ $("overviewAdvice").innerHTML=`<div class="recommend">${w.wind_speed_10m>10?"風が強め。風裏や安全な場所を優先してね。":"風速は予報上、極端に強くはない見込み。現地の風と波を確認してね。"}</div><div class="recommend">${w.precipitation>=1?"降水予報あり。視界・足場・雷情報を確認。":"降水量は少ない予報。"}</div><div class="recommend">潮汐・水温が未取得のため、魚種別の最終判断は保留。</div>`;
+ $("weatherDetails").innerHTML=`<div class="row"><span>風向</span><b>${fmt(hourly.wind_direction_10m[idx])}°</b></div><div class="row"><span>風速</span><b>${fmt(w.wind_speed_10m,1)} m/s</b></div><div class="row"><span>気温</span><b>${fmt(w.temperature_2m,1)} ℃</b></div><div class="row"><span>気圧</span><b>${fmt(w.surface_pressure,0)} hPa</b></div><div class="row"><span>降水量</span><b>${fmt(w.precipitation,1)} mm</b></div><div class="row"><span>雲量</span><b>${fmt(hourly.cloud_cover[idx])} %</b></div>`;
+ if(marine&&marine.hourly){
+   const mh=marine.hourly, mi=Math.min(idx,(mh.time||[]).length-1);
+   const val=k=>(mh[k]&&Number.isFinite(mh[k][mi]))?mh[k][mi]:null;
+   const sl=val("sea_level_height_msl"), st=val("sea_surface_temperature"), cv=val("ocean_current_velocity"), cd=val("ocean_current_direction"), wh=val("wave_height");
+   $("marineDetails").innerHTML=`<div class="row"><span>海面水温</span><b>${st===null?"--":fmt(st,1)+" ℃"}</b></div><div class="row"><span>海流速度</span><b>${cv===null?"--":fmt(cv,2)+" km/h"}</b></div><div class="row"><span>海流方向</span><b>${cd===null?"--":fmt(cd)+"°"}</b></div><div class="row"><span>有義波高</span><b>${wh===null?"--":fmt(wh,2)+" m"}</b></div><div class="row"><span>海面水位（全球平均海面基準）</span><b>${sl===null?"--":fmt(sl,2)+" m"}</b></div>`;
+   setDataStatus("seaLevelStatus",sl===null?"データなし":"取得済み・モデル値");
+   setDataStatus("sstStatus",st===null?"データなし":"取得済み・モデル値");
+   setDataStatus("currentStatus",cv===null?"データなし":"取得済み・モデル値");
+ }else{
+   $("marineDetails").textContent="海洋データ未取得。気象データとは別に取得するよ。";
+   setDataStatus("seaLevelStatus","未取得");setDataStatus("sstStatus","未取得");setDataStatus("currentStatus","未取得");
+ }
+ const d=wx.daily;$("sunDetails").innerHTML=`<div class="row"><span>日の出</span><b>${new Date(d.sunrise[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>日の入り</span><b>${new Date(d.sunset[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>最高気温</span><b>${fmt(d.temperature_2m_max[day],1)} ℃</b></div><div class="row"><span>最低気温</span><b>${fmt(d.temperature_2m_min[day],1)} ℃</b></div>`;
+ const names=["青物","サワラ","アオリイカ","カサゴ","マダイ","ヒラメ"];const offsets=[0,2,-3,-1,-2,-4];
+ $("fishList").innerHTML=names.map((n,i)=>{let v=Math.max(0,Math.min(100,score+offsets[i]));return `<div class="fish"><strong>${n}</strong><span class="num">${v}</span><span class="muted"> / 100・暫定環境指標</span><div class="bar"><i style="width:${v}%"></i></div></div>`}).join("");
+ const hours=Array.from({length:24},(_,i)=>{let j=Math.min(idx+i,hourly.time.length-1);return {time:new Date(hourly.time[j]),score:weatherScore({wind_speed_10m:hourly.wind_speed_10m[j],temperature_2m:hourly.temperature_2m[j],precipitation:hourly.precipitation[j],surface_pressure:hourly.surface_pressure[j]},new Date(hourly.time[j]).getHours())}});
+ drawChart(hours);$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score}/100</b></div>`).join("");
+ const ranked=hours.slice(0,18).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join("");
+ $("spotCompare").innerHTML=Object.values(spots).map(s=>`<div class="row"><span>${s.name}</span><span class="tag">同じ広域予報・地点差未評価</span></div>`).join("");
+ $("methodAdvice").innerHTML=target==="青物"||target==="サワラ"?"メタルジグのただ巻き・ワンピッチジャークを候補に。ベイトの有無とナブラを観察してね。":"対象魚の習性に合わせて、底層・中層・表層を探り分けよう。潮汐データ接続後に精度を高めるよ。";
+ $("lureAdvice").innerHTML=target==="青物"||target==="サワラ"?"40g前後のメタルジグを基準に、風・水深・流れで重さを調整。":"釣り場の水深・底質・ベイトに合わせて選択。現状は参考提案。";
+ $("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
+}
+function drawChart(data){const c=$("hourChart"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=190*dpr;ctx.scale(dpr,dpr);let W=r.width,H=190;ctx.clearRect(0,0,W,H);ctx.strokeStyle="#29485d";ctx.fillStyle="#9db4c4";ctx.font="10px system-ui";for(let y=0;y<=100;y+=25){let py=H-20-y/100*(H-40);ctx.beginPath();ctx.moveTo(30,py);ctx.lineTo(W-8,py);ctx.stroke();ctx.fillText(y,5,py+3)}ctx.strokeStyle="#42d4d8";ctx.lineWidth=2;ctx.beginPath();data.forEach((p,i)=>{let x=30+i*(W-42)/(data.length-1),y=H-20-p.score/100*(H-40);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle="#9db4c4";for(let i=0;i<data.length;i+=4){let x=30+i*(W-42)/(data.length-1);ctx.fillText(data[i].time.toLocaleTimeString("ja-JP",{hour:"2-digit"}),x-8,H-4)}}
+let loadSequence=0;
+async function load(force=false){
+ const sequence=++loadSequence;
+ const s=spots[$("spot").value], spotKey=$("spot").value;
+ if(activeController)activeController.abort();
+ const controller=new AbortController();
+ activeController=controller;
+ const signal=controller.signal;
+ $("updated").textContent="データ取得中…";
+ const weatherKey="fa_weather_"+spotKey, marineKey="fa_marine_"+spotKey;
+ const cachedWx=force?null:cacheRead(weatherKey), cachedMarine=force?null:cacheRead(marineKey);
+ wx=cachedWx||null; marine=cachedMarine||null;
+ if(wx){render();$("updated").textContent="保存データを表示・最新情報を取得中…";}
+ const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=3&timezone=Asia%2FTokyo`;
+ const marineUrl=`https://marine-api.open-meteo.com/v1/marine?latitude=${s.lat}&longitude=${s.lon}&hourly=wave_height,sea_level_height_msl,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&forecast_days=3&timezone=Asia%2FTokyo&cell_selection=sea`;
+ let timedOut=false, weatherError=null, marineError=null;
+ const timeout=setTimeout(()=>{timedOut=true;controller.abort();},15000);
+ const getJson=async(url,label)=>{
+   const response=await fetch(url,{signal});
+   if(!response.ok)throw new Error(label+" HTTP "+response.status);
+   const data=await response.json();
+   if(data.error)throw new Error(data.reason||label+" API error");
+   return data;
+ };
+ try{
+   const weatherTask=getJson(weatherUrl,"気象API")
+     .then(data=>{if(sequence!==loadSequence)return;wx=data;cacheWrite(weatherKey,data);render();})
+     .catch(error=>{if(error.name!=="AbortError")weatherError=error;});
+   const marineTask=getJson(marineUrl,"海洋API")
+     .then(data=>{if(sequence!==loadSequence)return;marine=data;cacheWrite(marineKey,data);if(wx)render();})
+     .catch(error=>{if(error.name!=="AbortError")marineError=error;});
+   await Promise.allSettled([weatherTask,marineTask]);
+ }catch(error){
+   weatherError=error;
+ }finally{
+   clearTimeout(timeout);
+ }
+ if(sequence!==loadSequence)return; // 別の釣り場へ切り替えた場合は古い結果を表示しない
+ if(!wx){
+   $("updated").textContent=timedOut?"取得タイムアウト（再試行してね）":"気象データ取得失敗";
+   $("summary").textContent=weatherError?("気象データを取得できなかったよ："+weatherError.message):"気象データを取得できなかったよ。通信環境を確認して再試行してね。";
+   $("grade").textContent="データなし";
+   $("marineDetails").textContent="海洋データを取得できなかったよ。";
+   return;
+ }
+ render();
+ if(timedOut){
+   $("updated").textContent="一部または全データがタイムアウト。再試行してね。";
+ }else if(marineError){
+   $("updated").textContent="気象データ更新済み · 海洋データ取得失敗";
+   $("marineDetails").textContent="海洋データの取得に失敗。気象データは利用できるよ。";
+ }else{
+   $("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})+(marine?" · 海洋データあり":" · 海洋データ未取得");
+ }
+}
+$("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
+$("refresh").addEventListener("click",()=>load(true));$("spot").addEventListener("change",load);["target","day"].forEach(id=>$(id).addEventListener("change",render));window.addEventListener("resize",()=>{if(wx)render()});load();
+</script>
+</body></html>
