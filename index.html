@@ -25,7 +25,7 @@ button{cursor:pointer;background:var(--cyan);border:0;border-radius:10px;padding
 .row{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px solid #244358}.row:last-child{border:0}
 .tag{font-size:11px;border:1px solid #3b6076;border-radius:99px;padding:4px 8px;color:#c8e1ed}
 .bar{height:8px;background:#29485d;border-radius:99px;overflow:hidden;margin-top:7px}.bar i{display:block;height:100%;background:linear-gradient(90deg,#42d4d8,#65d69a);border-radius:99px}
-.chart{width:100%;height:190px;background:#0a2132;border-radius:12px;border:1px solid #203e53}.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;font-size:12px;color:var(--muted)}.legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.source-link{color:#7de4e5;text-decoration:underline;text-underline-offset:3px}.source-note{font-size:12px;color:var(--muted);line-height:1.65;margin-top:9px}
+.chart{width:100%;height:190px;background:#0a2132;border-radius:12px;border:1px solid #203e53}.chart-legend{display:flex;gap:12px;flex-wrap:wrap;margin:10px 0;font-size:12px;color:var(--muted)}.legend-item{display:flex;align-items:center;gap:6px}.legend-dot{width:9px;height:9px;border-radius:50%;display:inline-block}.source-link{color:#7de4e5;text-decoration:underline;text-underline-offset:3px}.data-box{margin-top:12px;padding:12px;background:#0a2132;border:1px solid #29485d;border-radius:12px;font-size:12px;line-height:1.65}.data-box b{color:#ffd166}.factor-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:10px}.factor-card{background:#0a2132;border:1px solid #29485d;border-radius:10px;padding:10px;font-size:12px}.factor-card strong{display:block;margin-bottom:5px}.source-note{font-size:12px;color:var(--muted);line-height:1.65;margin-top:9px}
 .fishlist{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.fish{background:#0a2132;border:1px solid #203e53;border-radius:12px;padding:12px}
 .fish strong{display:block;margin-bottom:6px}.fish .num{font-size:22px;font-weight:800}
 .recommend{border-left:3px solid var(--cyan);padding:9px 12px;background:#0a2132;border-radius:0 10px 10px 0;margin:9px 0}
@@ -47,7 +47,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <div class="card">
       <div class="muted small">選択地点の環境コンディション指標（試作）</div>
       <div class="hero" style="margin-top:12px"><div><div class="score" id="score">--<small> / 100</small></div><div class="status" id="grade">データ取得中</div></div><div class="small" id="summary">気象情報を取得して評価するよ。</div></div>
-      <div class="notice" id="caveat">この数値は魚の実際の活性・釣果確率ではなく、取得できた環境データによる試作指標だよ。潮汐・潮流・水温の連携前は暫定評価。</div>
+      <div class="notice" id="caveat">この数値は魚の実際の活性・釣果確率ではなく、取得できた環境データによる試作指標だよ。取得できない要因は0点にせず、評価対象から除外するよ。</div><div class="data-box" id="dataAvailability">取得データの確認待ち</div>
       <div class="metrics">
         <div class="metric"><span>風速</span><b id="wind">--</b></div><div class="metric"><span>気温</span><b id="temp">--</b></div><div class="metric"><span>気圧</span><b id="pressure">--</b></div><div class="metric"><span>降水量</span><b id="rain">--</b></div>
       </div>
@@ -64,9 +64,9 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <div class="card"><h3>今日の釣行ポイント</h3><div id="overviewAdvice" class="small">気象データ取得後に表示</div></div>
   </div></section>
 
-  <section class="panel" id="forecast"><div class="card"><h3>24時間・環境指標とマズメ時間帯</h3><div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:#42d4d8"></i>環境指標（0〜100）</span><span class="legend-item"><i class="legend-dot" style="background:#e9ad54"></i>朝マズメ目安</span><span class="legend-item"><i class="legend-dot" style="background:#d88b48"></i>夕マズメ目安</span></div><canvas class="chart" id="hourChart"></canvas><p class="small">金色の帯は実際の日の出・日の入り時刻を基準にした目安。スコアは気象条件中心で、サワラのみ他海域の漁獲調査に基づく弱い時間補正を加えるよ。潮位の線は、今治の公式な毎時潮位データを安定取得できる接続方法を確認してから追加するね。</p><div id="hourList"></div></div></section>
+  <section class="panel" id="forecast"><div class="card"><h3>24時間・環境指標とマズメ時間帯</h3><div class="chart-legend"><span class="legend-item"><i class="legend-dot" style="background:#42d4d8"></i>環境指標（0〜100）</span><span class="legend-item"><i class="legend-dot" style="background:#e9ad54"></i>朝マズメ目安</span><span class="legend-item"><i class="legend-dot" style="background:#d88b48"></i>夕マズメ目安</span></div><canvas class="chart" id="hourChart"></canvas><p class="small">金色の帯は日の出・日の入りの目安。マズメ時間帯は現時点では加点していないよ。魚種別に取得できた季節・水温・風・波・降水要因を使って計算する。潮位の線は公式な毎時潮位データの接続後に追加するね。</p><div id="hourList"></div></div></section>
 
-  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><p class="small">固定時刻ボーナスと根拠のない魚種別点差を廃止。サワラのみ、他海域の漁獲調査で報告された「日の出後1〜4時間」の傾向を弱く反映した参考値。今治の岸釣りで検証された予測ではなく、釣果確率でもないよ。</p></div></section>
+  <section class="panel" id="species"><div class="card"><h3>魚種別の見方</h3><div class="fishlist" id="fishList"></div><div id="speciesEvaluation" class="data-box">魚種別の評価内訳はデータ取得後に表示するよ。</div><p class="small">魚種ごとに季節・海水温の参考情報を使い分けるよ。風・波は魚の活性ではなく釣りやすさの評価。未取得項目は0点にせず除外するよ。</p></div></section>
 
   <section class="panel" id="tide"><div class="two">
 <div class="card"><h3>海洋コンディション</h3><div id="marineDetails" class="small">海洋データ取得中</div>
@@ -81,7 +81,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 
   <section class="panel" id="weather"><div class="two"><div class="card"><h3>気象データ</h3><div id="weatherDetails" class="small">取得中</div></div><div class="card"><h3>日の出・日の入り</h3><div id="sunDetails" class="small">取得中</div><h3 style="margin-top:20px">データ提供元</h3><p class="small">Open-Meteo（気象予報API）。地点は選択した今治市本土内の代表座標。</p></div></div></section>
 
-  <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">気象条件を中心に算出。サワラのみ日の出後の参考傾向を弱く反映。潮流・ベイト・釣果実績は未反映。</p><div id="bestTimes"></div></div></section>
+  <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">選択魚種について、取得できた魚種別要因と釣りやすさ要因を使って算出。潮流・ベイト・釣果実績は未反映。未取得項目は計算から除外。</p><div id="bestTimes"></div></div></section>
 
   <section class="panel" id="spots"><div class="card"><h3>今治市本土・釣り場比較</h3><p class="small">同一の広域気象予報を参照する簡易比較。釣り場固有の風・波・潮流を表すものではないよ。</p><div id="spotCompare"></div></div></section>
 
@@ -125,10 +125,10 @@ function render(){
  const names=["青物","サワラ","アオリイカ","カサゴ","マダイ","ヒラメ"];const marinePoint=getMarinePoint(scoreIdx);const evaluations=names.map(n=>({name:n,result:evaluateFish(w,marinePoint,scoreTime,n)}));const selectedEvaluation=target==="all"?null:evaluateFish(w,marinePoint,scoreTime,target);const validEvaluations=evaluations.filter(x=>Number.isFinite(x.result.score));const score=target==="all"?(validEvaluations.length?Math.round(validEvaluations.reduce((s,x)=>s+x.result.score,0)/validEvaluations.length):null):selectedEvaluation.score;
  const selectedDate=wx.daily.time[day].split("-").map(Number);const dateLabel=`${selectedDate[0]}年${selectedDate[1]}月${selectedDate[2]}日`;
  const targetLabel=target==="all"?"すべての魚種":target;
- $("score").innerHTML=(score===null?"--":score)+'<small> / 100</small>';$("grade").textContent=score===null?"判定材料不足":grade(score);$("summary").textContent=`${spot.name}・${dateLabel}の${targetLabel}向け暫定環境指標。魚種補正を含む参考値で、釣果確率ではないよ。`;
+ $("score").innerHTML=(score===null?"--":score)+'<small> / 100</small>';$("grade").textContent=score===null?"判定材料不足":grade(score);$("summary").textContent=`${spot.name}・${dateLabel}の${targetLabel}向け暫定環境指標。取得できた要因だけで計算し、釣果確率ではないよ。`;
  $("wind").textContent=fmt(w.wind_speed_10m,1)+" m/s";$("temp").textContent=fmt(w.temperature_2m,1)+" ℃";$("pressure").textContent=fmt(w.surface_pressure,0)+" hPa";$("rain").textContent=fmt(w.precipitation,1)+" mm";
  const reasons=[["風",w.wind_speed_10m<=7?"比較的穏やか":w.wind_speed_10m<=10?"やや強め":"強風に注意"],["降水",w.precipitation<0.2?"少ない":"雨に注意"],["気温",w.temperature_2m+" ℃"],["評価",grade(score)]];
- setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["評価時刻",scoreTime.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})],["魚種別時間補正",target==="サワラ"?(solarFishFactor(scoreTime,sunrise,sunset,target)>0?"日の出後の参考時間帯":"補正なし"):"根拠不足のため加点なし"],["潮汐","未取得"],["水温","未取得"]]);
+ setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["評価時刻",scoreTime.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})],["魚種別評価",target==="all"?"6魚種の評価値を平均":"魚種別モデルで評価"],["潮汐・潮流","釣り場別データ未取得"],["海水温",Number.isFinite(marinePoint.sea_surface_temperature)?fmt(marinePoint.sea_surface_temperature,1)+" ℃（モデル）":"未取得"]]);
  $("overviewAdvice").innerHTML=`<div class="recommend">${w.wind_speed_10m>10?"風が強め。風裏や安全な場所を優先してね。":"風速は予報上、極端に強くはない見込み。現地の風と波を確認してね。"}</div><div class="recommend">${w.precipitation>=1?"降水予報あり。視界・足場・雷情報を確認。":"降水量は少ない予報。"}</div><div class="recommend">潮汐・水温が未取得のため、魚種別の最終判断は保留。</div>`;
  $("weatherDetails").innerHTML=`<div class="row"><span>風向</span><b>${fmt(hourly.wind_direction_10m[scoreIdx])}°</b></div><div class="row"><span>風速</span><b>${fmt(w.wind_speed_10m,1)} m/s</b></div><div class="row"><span>気温</span><b>${fmt(w.temperature_2m,1)} ℃</b></div><div class="row"><span>気圧</span><b>${fmt(w.surface_pressure,0)} hPa</b></div><div class="row"><span>降水量</span><b>${fmt(w.precipitation,1)} mm</b></div><div class="row"><span>雲量</span><b>${fmt(hourly.cloud_cover[idx])} %</b></div>`;
  if(marine&&marine.hourly){
@@ -144,9 +144,13 @@ function render(){
    setDataStatus("seaLevelStatus","未取得");setDataStatus("sstStatus","未取得");setDataStatus("currentStatus","未取得");
  }
  $("sunDetails").innerHTML=`<div class="row"><span>日の出</span><b>${new Date(d.sunrise[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>日の入り</span><b>${new Date(d.sunset[day]).toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</b></div><div class="row"><span>最高気温</span><b>${fmt(d.temperature_2m_max[day],1)} ℃</b></div><div class="row"><span>最低気温</span><b>${fmt(d.temperature_2m_min[day],1)} ℃</b></div>`;
- const visibleFish=names.map(n=>({name:n,value:fishScore(w,scoreTime,sunrise,sunset,n)})).filter(f=>target==="all"||f.name===target);
- $("fishList").innerHTML=visibleFish.map(f=>`<div class="fish"><strong>${f.name}</strong><span class="num">${f.value}</span><span class="muted"> / 100・暫定環境指標</span><div class="bar"><i style="width:${f.value}%"></i></div></div>`).join("");
- const hours=Array.from({length:24},(_,i)=>{let j=Math.min(idx+i,hourly.time.length-1),time=new Date(hourly.time[j]);return {time,score:target==="all"?weatherScore(getWeather(j)):fishScore(getWeather(j),time,sunrise,sunset,target)}});
+ const visibleFish=evaluations.filter(f=>target==="all"||f.name===target);
+ $("fishList").innerHTML=visibleFish.map(f=>'<div class="fish"><strong>'+f.name+'</strong><span class="num">'+(f.result.score===null?"--":f.result.score)+'</span><span class="muted"> / 100・取得要因による暫定指標</span><div class="bar"><i style="width:'+(f.result.score||0)+'%"></i></div></div>').join("");
+ const detailFish=target==="all"?evaluations:evaluations.filter(x=>x.name===target);
+ $("speciesEvaluation").innerHTML=detailFish.map(f=>'<strong>'+f.name+'の計算内訳</strong><div class="factor-grid">'+f.result.parts.map(x=>'<div class="factor-card"><strong>'+x.name+'：'+x.value+'/100</strong><span>'+x.detail+'</span></div>').join("")+'</div><p><b>今回取得できなかった／評価に使えなかった情報：</b>'+f.result.missing.join("、")+'</p>').join("");
+ const missingForSelected=target==="all"?evaluations.flatMap(x=>x.result.missing).filter((v,i,a)=>a.indexOf(v)===i):selectedEvaluation.missing;
+ $("dataAvailability").innerHTML="<b>取得・評価状況</b><br>風速 "+(Number.isFinite(w.wind_speed_10m)?"取得済み":"未取得")+" ／ 降水量 "+(Number.isFinite(w.precipitation)?"取得済み":"未取得")+" ／ 海水温 "+(Number.isFinite(marinePoint.sea_surface_temperature)?"取得済み":"未取得")+" ／ 波高 "+(Number.isFinite(marinePoint.wave_height)?"取得済み":"未取得")+"<br><b>未取得・未評価：</b>"+missingForSelected.join("、")+"<br>※未取得項目は0点として扱わず、計算から除外しているよ。";
+ const hours=Array.from({length:24},(_,i)=>{let j=Math.min(idx+i,hourly.time.length-1),time=new Date(hourly.time[j]),mp=getMarinePoint(j),ev=(target==="all"?names:names.filter(n=>n===target)).map(n=>evaluateFish(getWeather(j),mp,time,n)).filter(x=>Number.isFinite(x.score));return {time,score:ev.length?Math.round(ev.reduce((s,x)=>s+x.score,0)/ev.length):0}});
  drawChart(hours,{sunrise:new Date(d.sunrise[day]),sunset:new Date(d.sunset[day])});$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score}/100</b></div>`).join("");
  const ranked=hours.slice(0,18).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join("");
  $("spotCompare").innerHTML=Object.values(spots).map(s=>`<div class="row"><span>${s.name}</span><span class="tag">同じ広域予報・地点差未評価</span></div>`).join("");
