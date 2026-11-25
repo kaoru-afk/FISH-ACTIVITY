@@ -162,7 +162,7 @@ function buildFishingAdvice(target,w,mp){
  }
  };
  const order=target==="all"?Object.keys(profiles):[target];
- const wind=Number.isFinite(w.wind_speed_10m)?w.wind_speed_10m:null;
+ const wind=w&&Number.isFinite(w.wind_speed_10m)?w.wind_speed_10m:null;
  const wave=mp&&Number.isFinite(mp.wave_height)?mp.wave_height:null;
  const conditions=[];
  if(wind!==null)conditions.push(wind>=10?"風が強め。軽いエギ・ルアーは操作しにくいので、風裏へ移動するか重さを上げる。":wind>=7?"風の影響が出やすい。ラインが流される場合は少し重くするか風裏を選ぶ。":"風は比較的弱め。軽めの仕掛けも扱いやすい目安。");
@@ -174,6 +174,12 @@ function buildFishingAdvice(target,w,mp){
  const tackle=order.map(n=>'<div class="data-box"><strong>'+n+'：道具の目安</strong><p>'+profiles[n].gear+'</p></div>').join("");
  const caveat='<p class="small">※岸釣りを想定した標準的な出発点。号数・重さ・カラーは水深、底質、潮の速さ、ベイト、当日の視認性で調整してね。釣果データから自動最適化した値ではないよ。潮流・ベイト情報は現在未接続。</p>';
  return {method:method+note+caveat,tackle:tackle+note+caveat};
+}
+function renderFishingAdvice(weather=null,marinePoint=null){
+ const target=$("target")?$("target").value:"all";
+ const advice=buildFishingAdvice(target,weather,marinePoint);
+ $("methodAdvice").innerHTML=advice.method;
+ $("lureAdvice").innerHTML=advice.tackle;
 }
 function render(){
  if(!wx)return;
@@ -217,9 +223,7 @@ function render(){
  drawChart(hours,{sunrise:new Date(d.sunrise[day]),sunset:new Date(d.sunset[day])});$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score}/100</b></div>`).join("");
  const ranked=hours.slice(0,18).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join("");
  $("spotCompare").innerHTML=Object.values(spots).map(s=>`<div class="row"><span>${s.name}</span><span class="tag">同じ広域予報・地点差未評価</span></div>`).join("");
- const advice=buildFishingAdvice(target,w,marinePoint);
- $("methodAdvice").innerHTML=advice.method;
- $("lureAdvice").innerHTML=advice.tackle;
+ renderFishingAdvice(w,marinePoint);
  $("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
 }
 function drawChart(data,solar={}){const c=$("hourChart"),ctx=c.getContext("2d"),r=c.getBoundingClientRect(),dpr=window.devicePixelRatio||1;c.width=r.width*dpr;c.height=190*dpr;ctx.scale(dpr,dpr);let W=r.width,H=190,left=30,right=W-8,top=20,bottom=H-20;ctx.clearRect(0,0,W,H);const first=data[0].time.getTime(),last=data[data.length-1].time.getTime(),xAt=t=>left+(t-first)/(last-first)*(right-left);const band=(date,before,after,color,label)=>{if(!(date instanceof Date)||!Number.isFinite(date.getTime()))return;let x1=Math.max(left,xAt(date.getTime()-before*60000)),x2=Math.min(right,xAt(date.getTime()+after*60000));if(x2<=x1)return;ctx.fillStyle=color;ctx.fillRect(x1,top,x2-x1,bottom-top);ctx.fillStyle="#f5d49b";ctx.font="10px system-ui";ctx.fillText(label,Math.max(left+2,Math.min(x1+3,right-42)),top+11);ctx.strokeStyle=color;ctx.setLineDash([3,3]);ctx.beginPath();ctx.moveTo(xAt(date.getTime()),top);ctx.lineTo(xAt(date.getTime()),bottom);ctx.stroke();ctx.setLineDash([])};band(solar.sunrise,60,30,"rgba(233,173,84,.16)","朝マズメ");band(solar.sunset,30,60,"rgba(216,139,72,.16)","夕マズメ");ctx.strokeStyle="#29485d";ctx.fillStyle="#9db4c4";ctx.font="10px system-ui";for(let y=0;y<=100;y+=25){let py=bottom-y/100*(bottom-top);ctx.beginPath();ctx.moveTo(left,py);ctx.lineTo(right,py);ctx.stroke();ctx.fillText(y,5,py+3)}ctx.strokeStyle="#42d4d8";ctx.lineWidth=2;ctx.beginPath();data.forEach((p,i)=>{let x=xAt(p.time.getTime()),y=bottom-p.score/100*(bottom-top);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.stroke();ctx.fillStyle="#9db4c4";for(let i=0;i<data.length;i+=4){let x=xAt(data[i].time.getTime());ctx.fillText(data[i].time.toLocaleTimeString("ja-JP",{hour:"2-digit"}),x-8,H-4)}}
@@ -279,6 +283,6 @@ async function load(force=false){
  }
 }
 $("tabs").addEventListener("click",e=>{let b=e.target.closest("[data-tab]");if(!b)return;document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("active",x===b));document.querySelectorAll(".panel").forEach(x=>x.classList.toggle("active",x.id===b.dataset.tab));if(b.dataset.tab==="forecast"&&wx)render()});
-$("refresh").addEventListener("click",()=>load(true));$("spot").addEventListener("change",load);["target","day"].forEach(id=>$(id).addEventListener("change",render));window.addEventListener("resize",()=>{if(wx)render()});load();
+$("refresh").addEventListener("click",()=>load(true));$("spot").addEventListener("change",load);$("target").addEventListener("change",()=>{renderFishingAdvice();render()});$("day").addEventListener("change",render);window.addEventListener("resize",()=>{if(wx)render()});renderFishingAdvice();load();
 </script>
 </body></html>
