@@ -318,13 +318,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
      }).join(""):'まだ釣行記録がないよ。最初の釣行を登録してみてね。';
    }catch(error){$("tripHistory").textContent="履歴を読み込めなかったよ："+error.message;}
  }
- $("authSignup").addEventListener("click",faSignup);
- $("authLogin").addEventListener("click",faLogin);
- $("authLogout").addEventListener("click",faLogout);
- $("tripForm").addEventListener("submit",faSaveTrip);
- $("tripResult").addEventListener("change",()=>{$("catchFields").hidden=$("tripResult").value!=="caught";});
- $("tripStarted").value=new Date().toISOString().slice(0,16);
- faRestoreSession().then(faRenderAuth);
+
 
 
 const regions={
@@ -453,6 +447,13 @@ let wx=null, marine=null;
 const CACHE_TTL=10*60*1000;
 let activeController=null;
 const $=id=>document.getElementById(id);
+ $("authSignup").addEventListener("click",faSignup);
+ $("authLogin").addEventListener("click",faLogin);
+ $("authLogout").addEventListener("click",faLogout);
+ $("tripForm").addEventListener("submit",faSaveTrip);
+ $("tripResult").addEventListener("change",()=>{$("catchFields").hidden=$("tripResult").value!=="caught";});
+ $("tripStarted").value=new Date().toISOString().slice(0,16);
+ faRestoreSession().then(faRenderAuth);
 function cacheRead(key){try{const v=JSON.parse(localStorage.getItem(key)||"null");return v&&Date.now()-v.savedAt<CACHE_TTL?v.data:null}catch(_){return null}}
 function cacheWrite(key,data){try{localStorage.setItem(key,JSON.stringify({savedAt:Date.now(),data}))}catch(_){}} 
 function setDataStatus(id,text){const el=$(id);if(el)el.textContent=text}
