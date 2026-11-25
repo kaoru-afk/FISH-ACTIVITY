@@ -32,6 +32,19 @@ button{cursor:pointer;background:var(--cyan);border:0;border-radius:10px;padding
 .recommend{border-left:3px solid var(--cyan);padding:9px 12px;background:#0a2132;border-radius:0 10px 10px 0;margin:9px 0}
 footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-size:11px;line-height:1.7}
 @media(max-width:760px){.grid,.two{grid-template-columns:1fr}.metrics{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:1fr}.score{font-size:48px}.toolbar .field{flex:1}.field select{width:100%}}
+
+.trip-form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:12px}
+.trip-form .wide{grid-column:1/-1}
+.trip-form label{display:grid;gap:6px;color:var(--muted);font-size:12px}
+.trip-form input,.trip-form select,.trip-form textarea{width:100%;min-width:0;background:var(--panel);border:1px solid var(--line);color:var(--text);padding:10px 12px;border-radius:10px;font:inherit}
+.trip-form textarea{min-height:76px;resize:vertical}
+.trip-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.trip-actions button.secondary{background:#29485d;color:var(--text)}
+.trip-status{font-size:12px;line-height:1.6;margin-top:10px;color:var(--muted)}
+.trip-entry{padding:12px 0;border-bottom:1px solid var(--line)}
+.trip-entry:last-child{border-bottom:0}
+@media(max-width:600px){.trip-form{grid-template-columns:1fr}.trip-form .wide{grid-column:auto}}
+
 </style>
 </head>
 <body>
@@ -70,11 +83,75 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
     <div class="card"><h3>釣行判断メモ</h3><div id="reasons"><div class="row"><span class="muted">データ取得後に表示</span><span class="tag">待機中</span></div></div><div class="small" style="margin-top:10px">風・雨・気温・時間帯をもとにした簡易コメント。安全面では現地の突風・波・雷を必ず確認してね。</div></div>
   </section>
 
-  <nav class="tabs" id="tabs">
+  <nav class="tabs" id="tabs"><button class="tab" data-tab="triplog">釣行記録</button>
     <button class="tab active" data-tab="overview">総合判定</button><button class="tab" data-tab="forecast">24時間予測</button><button class="tab" data-tab="species">魚種別分析</button><button class="tab" data-tab="tide">潮汐分析</button><button class="tab" data-tab="weather">気象分析</button><button class="tab" data-tab="best">おすすめ時間</button><button class="tab" data-tab="spots">釣り場比較</button><button class="tab" data-tab="advice">釣り方提案</button>
   </nav>
 
-  <section class="panel active" id="overview"><div class="two">
+  
+<section class="panel" id="triplog">
+ <div class="two">
+  <div class="card">
+   <h3>🔐 アカウント</h3>
+   <p class="small">釣行記録はログインした本人だけが閲覧・管理できる設計だよ。パスワードはSupabase Authで管理され、アプリのデータベースには保存しないよ。</p>
+   <div id="authSignedOut">
+    <div class="trip-form">
+     <label class="wide">メールアドレス<input id="authEmail" type="email" autocomplete="email" placeholder="you@example.com"></label>
+     <label class="wide">パスワード<input id="authPassword" type="password" autocomplete="current-password" minlength="8" placeholder="8文字以上"></label>
+    </div>
+    <div class="trip-actions"><button type="button" id="authSignup">新規登録</button><button type="button" class="secondary" id="authLogin">ログイン</button></div>
+   </div>
+   <div id="authSignedIn" hidden>
+    <div class="small" id="authUserLabel"></div>
+    <div class="trip-actions"><button type="button" class="secondary" id="authLogout">ログアウト</button></div>
+   </div>
+   <div class="trip-status" id="authMessage" aria-live="polite">釣行記録を保存するにはログインしてね。</div>
+  </div>
+  <div class="card">
+   <h3>📊 釣行データの蓄積</h3>
+   <div class="row"><span>釣行記録</span><b id="tripCount">--</b></div>
+   <div class="row"><span>釣果記録</span><b id="catchCount">--</b></div>
+   <div class="row"><span>ボウズの釣行</span><b id="blankCount">--</b></div>
+   <p class="small">記録が増えると、魚種・釣り場・季節・釣り方・釣行条件ごとの傾向を分析できるようになるよ。現時点では分析値ではなく、保存件数を表示する段階だよ。</p>
+  </div>
+ </div>
+ <div class="card" style="margin-top:14px">
+  <h3>🎣 釣行を記録</h3>
+  <p class="small">釣れなかった日も「ボウズ」で保存してね。釣行中止はボウズと分けて集計するよ。</p>
+  <form id="tripForm">
+   <div class="trip-form">
+    <label>釣行開始日時<input id="tripStarted" type="datetime-local" required></label>
+    <label>終了日時（任意）<input id="tripEnded" type="datetime-local"></label>
+    <label>都道府県・地域<input id="tripPrefecture" value="愛媛県" placeholder="例：愛媛県"></label>
+    <label>市町・海域<input id="tripArea" placeholder="例：今治市・しまなみ"></label>
+    <label class="wide">釣り場名<input id="tripSpot" required placeholder="例：富田新港 新波止"></label>
+    <label>対象魚（複数は「、」区切り）<input id="tripTargets" placeholder="例：青物、サワラ"></label>
+    <label>釣り方<select id="tripMethod"><option value="">選択してください</option><option>ショアジギング</option><option>泳がせ釣り</option><option>エギング</option><option>フカセ釣り</option><option>サビキ釣り</option><option>投げ釣り</option><option>穴釣り</option><option>ルアー釣り</option><option>その他</option></select></label>
+    <label>エサ・ルアー<input id="tripBait" placeholder="例：メタルジグ40g"></label>
+    <label>釣行結果<select id="tripResult" required><option value="caught">釣果あり</option><option value="blank">ボウズ（釣果なし）</option><option value="no_fishing">釣行中止</option><option value="unknown">未確定</option></select></label>
+    <label class="wide">メモ<textarea id="tripNotes" placeholder="潮の動き、ベイト、風向き、仕掛け変更など"></textarea></label>
+   </div>
+   <div id="catchFields">
+    <h3 style="margin-top:18px">🐟 釣果（釣果ありの場合）</h3>
+    <div class="trip-form">
+     <label>魚種<input id="catchSpecies" placeholder="例：サゴシ"></label>
+     <label>匹数<input id="catchQuantity" type="number" min="1" step="1" value="1"></label>
+     <label>全長（cm・任意）<input id="catchLength" type="number" min="0.1" step="0.1" placeholder="例：55"></label>
+     <label>重量（kg・任意）<input id="catchWeight" type="number" min="0.001" step="0.001" placeholder="例：1.2"></label>
+     <label class="wide">釣れた時刻（任意）<input id="catchTime" type="datetime-local"></label>
+    </div>
+    <p class="small">まずは代表的な魚種1種類を登録できる初期版。複数魚種の登録機能は次の拡張で追加するよ。</p>
+   </div>
+   <div class="trip-actions"><button type="submit" id="saveTrip">釣行データを保存</button></div>
+   <div class="trip-status" id="tripMessage" aria-live="polite">ログインすると保存できるよ。</div>
+  </form>
+ </div>
+ <div class="card" style="margin-top:14px">
+  <h3>📚 自分の釣行履歴</h3>
+  <div id="tripHistory" class="small">ログインすると自分の記録を表示するよ。</div>
+ </div>
+</section>
+
+<section class="panel active" id="overview"><div class="two">
     <div class="card"><h3>現在の評価要因</h3><div id="factorRows" class="small">データ取得後に表示</div></div>
     <div class="card"><h3>今日の釣行ポイント</h3><div id="overviewAdvice" class="small">気象データ取得後に表示</div></div>
   </div></section>
@@ -135,6 +212,120 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
      console.error("Supabase connection check failed:",error);
    }
  }
+
+
+ // Private fishing log: Supabase Auth + owner-scoped PostgREST writes.
+ const FA_SESSION_KEY = "fish_activity_auth_session_v1";
+ let faSession = null;
+ function faSetAuthMessage(message, isError=false){
+   const el=$("authMessage"); if(!el)return;
+   el.textContent=message; el.style.color=isError?"#ff9b9b":"var(--muted)";
+ }
+ function faSetTripMessage(message,isError=false){
+   const el=$("tripMessage"); if(!el)return;
+   el.textContent=message; el.style.color=isError?"#ff9b9b":"var(--muted)";
+ }
+ function faAuthHeaders(){
+   const token=faSession?.access_token;
+   return {"apikey":SUPABASE_PUBLISHABLE_KEY,"Authorization":"Bearer "+(token||SUPABASE_PUBLISHABLE_KEY),"Content-Type":"application/json"};
+ }
+ async function faAuthRequest(path,body){
+   const response=await fetch(SUPABASE_URL+"/auth/v1/"+path,{method:"POST",headers:{"apikey":SUPABASE_PUBLISHABLE_KEY,"Content-Type":"application/json"},body:JSON.stringify(body)});
+   const data=await response.json().catch(()=>({}));
+   if(!response.ok)throw new Error(data.msg||data.message||data.error_description||data.error||("HTTP "+response.status));
+   return data;
+ }
+ function faStoreSession(data){
+   if(data.access_token&&data.user){faSession=data;localStorage.setItem(FA_SESSION_KEY,JSON.stringify(data));}
+ }
+ async function faRestoreSession(){
+   try{const raw=localStorage.getItem(FA_SESSION_KEY);if(!raw)return;const saved=JSON.parse(raw);if(!saved.refresh_token)return;
+     if(saved.expires_at&&saved.expires_at*1000>Date.now()+60000){faSession=saved;return;}
+     const refreshed=await faAuthRequest("token?grant_type=refresh_token",{refresh_token:saved.refresh_token});
+     faStoreSession(refreshed);
+   }catch(error){faSession=null;localStorage.removeItem(FA_SESSION_KEY);faSetAuthMessage("ログイン状態を復元できなかったよ。もう一度ログインしてね。",true);}
+ }
+ function faRenderAuth(){
+   const signed=!!faSession?.access_token;
+   $("authSignedOut").hidden=signed;$("authSignedIn").hidden=!signed;
+   $("authUserLabel").textContent=signed?"ログイン中："+(faSession.user.email||"登録ユーザー"):"";
+   $("saveTrip").disabled=!signed;
+   if(signed){faSetAuthMessage("ログイン中。釣行記録を保存できるよ。");faLoadTrips();}
+   else{$("tripHistory").textContent="ログインすると自分の記録を表示するよ。";$("tripCount").textContent="--";$("catchCount").textContent="--";$("blankCount").textContent="--";faSetTripMessage("ログインすると保存できるよ。");}
+   $("catchFields").hidden=$("tripResult").value!=="caught";
+ }
+ async function faSignup(){
+   const email=$("authEmail").value.trim(),password=$("authPassword").value;
+   if(!email||password.length<8){faSetAuthMessage("メールアドレスと8文字以上のパスワードを入力してね。",true);return;}
+   try{const data=await faAuthRequest("signup",{email,password});
+     if(data.access_token){faStoreSession(data);faRenderAuth();}
+     else faSetAuthMessage("登録を受け付けたよ。メール認証が必要な場合は、届いたメールのリンクを開いてからログインしてね。");
+   }catch(error){faSetAuthMessage("登録できなかったよ："+error.message,true);}
+ }
+ async function faLogin(){
+   const email=$("authEmail").value.trim(),password=$("authPassword").value;
+   if(!email||!password){faSetAuthMessage("メールアドレスとパスワードを入力してね。",true);return;}
+   try{const data=await faAuthRequest("token?grant_type=password",{email,password});faStoreSession(data);faRenderAuth();}
+   catch(error){faSetAuthMessage("ログインできなかったよ："+error.message,true);}
+ }
+ function faLogout(){faSession=null;localStorage.removeItem(FA_SESSION_KEY);faRenderAuth();faSetAuthMessage("ログアウトしたよ。");}
+ async function faRest(path,options={}){
+   const response=await fetch(SUPABASE_URL+"/rest/v1/"+path,{...options,headers:{...faAuthHeaders(),...(options.headers||{})}});
+   const body=await response.text();
+   if(!response.ok)throw new Error(body||("HTTP "+response.status));
+   return body?JSON.parse(body):null;
+ }
+ function faDateTime(value){return value?new Date(value).toISOString():null;}
+ async function faSaveTrip(event){
+   event.preventDefault();
+   if(!faSession?.user?.id){faSetTripMessage("先にログインしてね。",true);return;}
+   const started=$("tripStarted").value,ended=$("tripEnded").value,result=$("tripResult").value;
+   if(!started){faSetTripMessage("釣行開始日時を入力してね。",true);return;}
+   if(ended&&new Date(ended)<new Date(started)){faSetTripMessage("終了日時は開始日時より後にしてね。",true);return;}
+   if(result==="caught"&&!$("catchSpecies").value.trim()){faSetTripMessage("釣果ありの場合は魚種を入力してね。",true);return;}
+   if(result==="caught"&&(!Number.isInteger(Number($("catchQuantity").value))||Number($("catchQuantity").value)<1)){faSetTripMessage("匹数は1以上の整数にしてね。",true);return;}
+   $("saveTrip").disabled=true;faSetTripMessage("保存中…");
+   try{
+     const trip={user_id:faSession.user.id,spot_name:$("tripSpot").value.trim(),prefecture:$("tripPrefecture").value.trim()||null,area_name:$("tripArea").value.trim()||null,started_at:faDateTime(started),ended_at:faDateTime(ended),target_species:$("tripTargets").value.split(/[、,]/).map(x=>x.trim()).filter(Boolean),fishing_method:$("tripMethod").value||null,bait_or_lure:$("tripBait").value.trim()||null,result_status:result,notes:$("tripNotes").value.trim()||null};
+     if(!trip.spot_name)throw new Error("釣り場名を入力してね。");
+     const saved=await faRest("fishing_trips?select=id,spot_name,started_at,result_status",{method:"POST",headers:{"Prefer":"return=representation"},body:JSON.stringify(trip)});
+     const tripId=saved?.[0]?.id;if(!tripId)throw new Error("釣行記録の保存結果を確認できなかったよ。");
+     if(result==="caught"){
+       const catchRow={user_id:faSession.user.id,trip_id:tripId,species_name:$("catchSpecies").value.trim(),caught_at:faDateTime($("catchTime").value)||faDateTime(started),quantity:Number($("catchQuantity").value),length_cm:$("catchLength").value?Number($("catchLength").value):null,weight_kg:$("catchWeight").value?Number($("catchWeight").value):null,fishing_method:trip.fishing_method,bait_or_lure:trip.bait_or_lure};
+       try{await faRest("catch_records",{method:"POST",headers:{"Prefer":"return=minimal"},body:JSON.stringify(catchRow)});}
+       catch(catchError){faSetTripMessage("釣行記録は保存できたけど、釣果の保存に失敗したよ："+catchError.message+"。履歴を確認してね。",true);await faLoadTrips();return;}
+     }
+     faSetTripMessage("釣行記録を保存したよ。"+(result==="caught"?"釣果も登録したよ。":result==="blank"?"ボウズとして記録したよ。":result==="no_fishing"?"釣行中止として記録したよ。":""));
+     $("tripForm").reset();$("tripPrefecture").value="愛媛県";$("tripStarted").value=new Date().toISOString().slice(0,16);$("catchQuantity").value="1";$("catchFields").hidden=$("tripResult").value!=="caught";
+     await faLoadTrips();
+   }catch(error){faSetTripMessage("保存できなかったよ："+error.message,true);}
+   finally{$("saveTrip").disabled=!faSession?.access_token;}
+ }
+ async function faLoadTrips(){
+   if(!faSession?.access_token)return;
+   $("tripHistory").textContent="履歴を読み込み中…";
+   try{
+     const [trips,catches]=await Promise.all([
+       faRest("fishing_trips?select=id,spot_name,started_at,result_status,target_species,fishing_method&order=started_at.desc&limit=50"),
+       faRest("catch_records?select=id,trip_id,species_name,quantity&order=caught_at.desc&limit=200")
+     ]);
+     $("tripCount").textContent=trips.length+"件";$("catchCount").textContent=catches.length+"件";$("blankCount").textContent=trips.filter(x=>x.result_status==="blank").length+"件";
+     const catchMap={};catches.forEach(x=>{(catchMap[x.trip_id]??=[]).push(x);});
+     $("tripHistory").innerHTML=trips.length?trips.map(t=>{
+       const label={caught:"釣果あり",blank:"ボウズ",no_fishing:"釣行中止",unknown:"未確定"}[t.result_status]||t.result_status;
+       const fish=(catchMap[t.id]||[]).map(x=>x.species_name+" × "+x.quantity).join("、");
+       return '<div class="trip-entry"><b>'+String(t.spot_name).replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch]))+'</b><div>'+new Date(t.started_at).toLocaleString("ja-JP")+' · '+label+'</div><div>'+(fish||"釣果詳細なし")+'</div><div class="small">'+(t.fishing_method||"釣り方未入力")+'</div></div>';
+     }).join(""):'まだ釣行記録がないよ。最初の釣行を登録してみてね。';
+   }catch(error){$("tripHistory").textContent="履歴を読み込めなかったよ："+error.message;}
+ }
+ $("authSignup").addEventListener("click",faSignup);
+ $("authLogin").addEventListener("click",faLogin);
+ $("authLogout").addEventListener("click",faLogout);
+ $("tripForm").addEventListener("submit",faSaveTrip);
+ $("tripResult").addEventListener("change",()=>{$("catchFields").hidden=$("tripResult").value!=="caught";});
+ $("tripStarted").value=new Date().toISOString().slice(0,16);
+ faRestoreSession().then(faRenderAuth);
+
 
 const regions={
  toyo:{name:"東予",areas:[{id:"kamijima",name:"上島町・しまなみ北部",lat:34.26,lon:133.20},{id:"imabari",name:"今治市・しまなみ",lat:34.066,lon:132.998},{id:"saijo",name:"西条市・東予港",lat:33.93,lon:133.18},{id:"niihama",name:"新居浜市",lat:33.97,lon:133.28},{id:"shikokuchuo",name:"四国中央市",lat:33.98,lon:133.55}],fish:["アジ","サバ","イワシ","サヨリ","メバル","カサゴ","チヌ","グレ","マダイ","アオリイカ","タチウオ","キス","カレイ","シーバス","ヒラメ","青物","サワラ","ハゼ","タコ"]},
