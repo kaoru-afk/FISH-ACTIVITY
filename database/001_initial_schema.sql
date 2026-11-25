@@ -28,7 +28,7 @@ create table if not exists public.environment_snapshots (
  spot_key text, forecast_for timestamptz not null, retrieved_at timestamptz not null default now(),
  data_kind text not null check (data_kind in ('weather','marine','tide','current','baitfish','manual_observation')),
  provider text not null, model_name text, latitude double precision, longitude double precision,
- values jsonb not null, units jsonb not null default '{}'::jsonb, quality jsonb not null default '{}'::jsonb,
+ payload jsonb not null, units jsonb not null default '{}'::jsonb, quality jsonb not null default '{}'::jsonb,
  app_version text, created_at timestamptz not null default now()
 );
 create index if not exists environment_snapshots_spot_time_idx on public.environment_snapshots (spot_id, forecast_for desc);
