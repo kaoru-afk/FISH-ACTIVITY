@@ -156,6 +156,7 @@ function updateArea(){
  filtered.forEach((p,i)=>{const id=areaId+"_spot_"+i;spots[id]={id,name:p[0],lat:p[1],lon:p[2]};});
  $("spot").innerHTML=filtered.map((p,i)=>'<option value="'+areaId+'_spot_'+i+'">'+p[0]+'</option>').join("");
  $("target").innerHTML='<option value="all">このエリアの全魚種</option>'+getRegionFish().map(n=>'<option value="'+n+'">'+n+'</option>').join("");
+ const plannerFish=$("plannerFish");if(plannerFish){const previous=plannerFish.value;plannerFish.innerHTML='<option value="all">全魚種</option>'+getRegionFish().map(n=>'<option value="'+n+'">'+n+'</option>').join("");plannerFish.value=getRegionFish().includes(previous)?previous:"all";}
  renderSpotRecommendations();
 }
 function recommendationProfile(fish){
@@ -269,11 +270,11 @@ async function runTripPlanner(){
   const [wr,mr]=await Promise.allSettled([fetch(wu).then(x=>{if(!x.ok)throw Error("weather");return x.json()}),fetch(mu).then(x=>{if(!x.ok)throw Error("marine");return x.json()})]);
   const w=wr.status==="fulfilled"?wr.value:null,m=mr.status==="fulfilled"?mr.value:null;
   const avg=(arr)=>{const vals=(arr||[]).filter(Number.isFinite);return vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null};
-  const dayIndex=w?.daily?.time?.indexOf(dateKey)??-1;
   const hourlyIndices=(w?.hourly?.time||[]).map((t,i)=>t.startsWith(dateKey)?i:-1).filter(i=>i>=0);
-  const marineIndices=(m?.hourly?.time||[]).map((t,i)=>t.startsWith(dateKey)?i:-1).filter(i=>i>=0);
+  const marineTimes=m?.hourly?.time||[];
+  const marineIndices=marineTimes.map((t,i)=>t.startsWith(dateKey)?i:-1).filter(i=>i>=0);
   const wa=arr=>avg(hourlyIndices.map(i=>arr?.[i]));
-  const ma=arr=>avg(marineIndices.map(i=>arr?.[i]));
+  const ma=arr=>avg(hourlyIndices.map(i=>{const t=w?.hourly?.time?.[i];const mi=t?marineTimes.indexOf(t):-1;return mi>=0?arr?.[mi]:null;}));
   return {name:p[0],p,type:item.type,base:item.base,weather:{wind_speed_10m:wa(w?.hourly?.wind_speed_10m),precipitation:wa(w?.hourly?.precipitation)},marine:{wave_height:ma(m?.hourly?.wave_height),sea_surface_temperature:ma(m?.hourly?.sea_surface_temperature)},ok:!!w&&hourlyIndices.length>0};
  };
  const points=await Promise.all(chosen.map(fetchPoint));
