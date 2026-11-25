@@ -190,22 +190,30 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
    const status = $("supabaseStatus");
    if(!status)return;
    status.textContent = "DB接続確認中";
+   status.title = "";
    try{
      const response = await fetch(SUPABASE_URL + "/rest/v1/fishing_spots?select=id&limit=1", {
        method:"GET",
-       headers:{
-         "apikey":SUPABASE_PUBLISHABLE_KEY
-       },
+       headers:{"apikey":SUPABASE_PUBLISHABLE_KEY},
        cache:"no-store"
      });
-     if(!response.ok) throw new Error("HTTP " + response.status);
+     if(!response.ok){
+       const body = await response.text();
+       let detail = body;
+       try{
+         const parsed = JSON.parse(body);
+         detail = (parsed.code ? parsed.code + " " : "") + (parsed.message || parsed.error || body);
+       }catch(_){}
+       throw new Error("HTTP " + response.status + (detail ? " / " + detail.slice(0,140) : ""));
+     }
      await response.json();
      status.textContent = "DB接続OK";
      status.style.borderColor = "#65d69a";
      status.style.color = "#65d69a";
    }catch(error){
-     status.textContent = "DB接続未確認";
-     status.title = "Supabase接続を確認できなかったよ: " + error.message;
+     const detail = String(error && error.message || error);
+     status.textContent = detail.startsWith("HTTP ") ? "DB接続失敗: " + detail : "DB接続失敗: 通信エラー";
+     status.title = detail;
      status.style.borderColor = "#ff7b7b";
      status.style.color = "#ff9b9b";
      console.error("Supabase connection check failed:",error);
