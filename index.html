@@ -87,7 +87,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
 
   <section class="panel" id="best"><div class="card"><h3>おすすめ釣行時間ランキング</h3><p class="small">選択魚種について、取得できた魚種別要因と釣りやすさ要因を使って算出。潮流・ベイト・釣果実績は未反映。未取得項目は計算から除外。</p><div id="bestTimes"></div></div></section>
 
-  <section class="panel" id="spots"><div class="card"><h3>愛媛県内・エリア比較</h3><p class="small">選択地域内の代表地点を比較。各地点の気象・海洋モデル値で、港内や釣り座の実測値ではないよ。</p><div id="spotCompare"></div></div></section>
+  <section class="panel" id="spots"><div class="card"><h3>エリア一覧（数値比較は未実装）</h3><p class="small">現在はエリア名の一覧のみ表示しているよ。各釣り場の気象・海洋データを同じ時刻で取得した数値比較は、まだ実装されていないよ。</p><div id="spotCompare"></div></div></section>
 
   <section class="panel" id="advice"><div class="two"><div class="card"><h3>おすすめの釣り方</h3><div id="methodAdvice" class="small">データ取得後に表示</div></div><div class="card"><h3>おすすめルアー・注意点</h3><div id="lureAdvice" class="small">データ取得後に表示</div></div></div></section>
 </main>
@@ -339,7 +339,7 @@ function render(){
  const hours=Array.from({length:Math.min(24,hourly.time.length-idx)},(_,i)=>{let j=idx+i,time=new Date(hourly.time[j]),mp=getMarinePoint(j),ev=(target==="all"?names:names.filter(n=>n===target)).map(n=>evaluateFish(getWeather(j),mp,time,n)).filter(x=>Number.isFinite(x.score));return {time,score:ev.length?Math.round(ev.reduce((s,x)=>s+x.score,0)/ev.length):null}});
  drawChart(hours,{sunrise:new Date(d.sunrise[day]),sunset:new Date(d.sunset[day])});$("hourList").innerHTML=hours.filter((_,i)=>i%3===0).map(x=>`<div class="row"><span>${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}</span><b>${x.score===null?"--":x.score+"/100"}</b></div>`).join("");
  const ranked=hours.filter(x=>Number.isFinite(x.score)).sort((a,b)=>b.score-a.score).slice(0,5);$("bestTimes").innerHTML=ranked.length?ranked.map((x,i)=>`<div class="row"><span>${i+1}. ${x.time.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})}ごろ</span><b>${x.score}/100</b></div>`).join(""):'<p class="small">評価に使えるデータがないため、時間帯を順位付けできないよ。</p>';
- $("spotCompare").innerHTML=regions[$("region").value].areas.map(s=>`<div class="row"><span>${s.name}</span><span class="tag">代表地点のモデル値</span></div>`).join("");
+ $("spotCompare").innerHTML=regions[$("region").value].areas.map(s=>`<div class="row"><span>${s.name}</span><span class="tag">エリア登録済み</span></div>`).join("");
  renderFishingAdvice(w,marinePoint);
  $("updated").textContent="更新 "+new Date().toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"});
 }
