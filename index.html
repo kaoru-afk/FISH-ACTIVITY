@@ -353,11 +353,11 @@ async function load(force=false){
  activeController=controller;
  const signal=controller.signal;
  $("updated").textContent="データ取得中…";
- const weatherKey="fa_weather_v4_"+spotKey, marineKey="fa_marine_v4_"+spotKey;
+ const weatherKey="fa_weather_v5_"+spotKey, marineKey="fa_marine_v5_"+spotKey;
  const cachedWx=force?null:cacheRead(weatherKey), cachedMarine=force?null:cacheRead(marineKey);
  wx=cachedWx||null; marine=cachedMarine||null;
  if(wx){render();$("updated").textContent="保存データを表示・最新情報を取得中…";}
- const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&forecast_days=7&timezone=Asia%2FTokyo`;
+ const weatherUrl=`https://api.open-meteo.com/v1/forecast?latitude=${s.lat}&longitude=${s.lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,precipitation,weather_code,cloud_cover,surface_pressure,wind_speed_10m,wind_direction_10m&hourly=temperature_2m,precipitation,wind_speed_10m,wind_direction_10m,surface_pressure,cloud_cover&daily=sunrise,sunset,temperature_2m_max,temperature_2m_min,precipitation_sum&wind_speed_unit=ms&forecast_days=7&timezone=Asia%2FTokyo`;
  const marineUrl=`https://marine-api.open-meteo.com/v1/marine?latitude=${s.lat}&longitude=${s.lon}&hourly=wave_height,sea_level_height_msl,sea_surface_temperature,ocean_current_velocity,ocean_current_direction&forecast_days=7&timezone=Asia%2FTokyo&cell_selection=sea`;
  let timedOut=false, weatherError=null, marineError=null;
  const timeout=setTimeout(()=>{timedOut=true;controller.abort();},15000);
