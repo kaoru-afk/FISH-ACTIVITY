@@ -193,15 +193,25 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
    status.title = "";
    status.style.borderColor = "#386079";
    status.style.color = "#b9d7e7";
-   const controller = new AbortController();
-   const timeout = setTimeout(()=>controller.abort(),10000);
+   let controller = null;
+   let timeout = null;
    try{
-     const response = await fetch(SUPABASE_URL + "/rest/v1/fishing_spots?select=id&limit=1", {
-       method:"GET",
-       headers:{"apikey":SUPABASE_PUBLISHABLE_KEY},
-       cache:"no-store",
-       signal:controller.signal
+     if(typeof AbortController !== "undefined") controller = new AbortController();
+     const timeoutPromise = new Promise((_,reject)=>{
+       timeout = setTimeout(()=>{
+         if(controller) controller.abort();
+         reject(new Error("DB_TIMEOUT"));
+       },10000);
      });
+     const response = await Promise.race([
+       fetch(SUPABASE_URL + "/rest/v1/fishing_spots?select=id&limit=1", {
+         method:"GET",
+         headers:{"apikey":SUPABASE_PUBLISHABLE_KEY},
+         cache:"no-store",
+         signal:controller ? controller.signal : undefined
+       }),
+       timeoutPromise
+     ]);
      if(!response.ok){
        const body = await response.text();
        let detail = body;
@@ -216,7 +226,7 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
      status.style.borderColor = "#65d69a";
      status.style.color = "#65d69a";
    }catch(error){
-     const timedOut = error && error.name === "AbortError";
+     const timedOut = error && (error.name === "AbortError" || error.message === "DB_TIMEOUT");
      const detail = timedOut ? "10秒以内にSupabaseから応答がなかったよ" : String(error && error.message || error);
      status.textContent = timedOut ? "DB接続タイムアウト" : detail.startsWith("HTTP ") ? "DB接続失敗: " + detail : "DB接続失敗: 通信エラー";
      status.title = detail;
@@ -224,14 +234,10 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
      status.style.color = "#ff9b9b";
      console.error("Supabase connection check failed:",error);
    }finally{
-     clearTimeout(timeout);
+     if(timeout !== null) clearTimeout(timeout);
    }
  }
 
-
- // Run the DB check immediately after its definition. This keeps later UI initialization errors
- // from leaving the initial "DB接続確認中" label on screen.
- checkSupabaseConnection();
 
  // Private fishing log: Supabase Auth + owner-scoped PostgREST writes.
  const FA_SESSION_KEY = "fish_activity_auth_session_v1";
@@ -466,6 +472,8 @@ let wx=null, marine=null;
 const CACHE_TTL=10*60*1000;
 let activeController=null;
 const $=id=>document.getElementById(id);
+// Start the DB check after the DOM helper exists, but before the rest of UI startup.
+checkSupabaseConnection();
  $("authSignup").addEventListener("click",faSignup);
  $("authLogin").addEventListener("click",faLogin);
  $("authLogout").addEventListener("click",faLogout);
