@@ -1,8 +1,11 @@
 # FISH ACTIVITY データベース設計書
 
-- 文書版: 0.1
+- 文書版: 0.2
 - 根拠: database/001_initial_schema.sql
 - DB: Supabase PostgreSQL
+
+## 2026-11-26 改訂
+今回の変更はフロントエンド内の算出・表示責務の分離であり、DBテーブル・カラム・RLS・GRANTの変更は行っていない。将来 predictions に環境適合度と魚種別活動期待度を保存する場合は、DDLと本書を同時に改訂する。
 
 ## テーブル一覧
 | テーブル | 用途 |
