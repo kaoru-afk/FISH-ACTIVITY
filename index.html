@@ -506,7 +506,7 @@ async function runTripPlanner(){
  const resultBox=$("plannerResults"); if(!areaList.length){resultBox.innerHTML='<p class="small">このエリアに釣り場候補がないよ。</p>';return;}
  if((mode==="fish")&&selectedFish==="all"){resultBox.innerHTML='<p class="small">魚種から探す場合は、上の「対象魚」でも魚種を選んでね。</p>';return;}
  resultBox.innerHTML='<p class="small">選択日 '+dateKey+' の地点別予報を取得中…</p>';
- const fishes=mode==="fish"?[selectedFish]:mode==="spot"?getRegionFish():getRegionFish();
+ const fishes=mode==="spot"?getRegionFish():selectedFish!=="all"?[selectedFish]:getRegionFish();
  const candidates=areaList.map(p=>{const type=p[3]||spotTypeByName[p[0]]||"port";let best=0;for(const f of fishes){const prof=recommendationProfile(f);best=Math.max(best,prof.types[type]||0,...prof.words.filter(w=>p[0].includes(w)).map(()=>Math.min(6,(prof.types[type]||0)+.8)));}return {p,type,base:best};});
  let chosen=[];
  if(mode==="spot"){
@@ -536,7 +536,7 @@ async function runTripPlanner(){
  const pairs=[];
  for(const point of points){
   if(!point.ok)continue;
-  const fishList=mode==="fish"?[selectedFish]:mode==="spot"?getRegionFish():fishes;
+  const fishList=mode==="spot"?getRegionFish():selectedFish!=="all"?[selectedFish]:fishes;
   for(const fish of fishList){
    const ev=evaluateFish(point.weather,point.marine,date,fish);
    if(!Number.isFinite(ev.score))continue;
