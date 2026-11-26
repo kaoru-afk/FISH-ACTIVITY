@@ -191,11 +191,16 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
    if(!status)return;
    status.textContent = "DB接続確認中";
    status.title = "";
+   status.style.borderColor = "#386079";
+   status.style.color = "#b9d7e7";
+   const controller = new AbortController();
+   const timeout = setTimeout(()=>controller.abort(),10000);
    try{
      const response = await fetch(SUPABASE_URL + "/rest/v1/fishing_spots?select=id&limit=1", {
        method:"GET",
        headers:{"apikey":SUPABASE_PUBLISHABLE_KEY},
-       cache:"no-store"
+       cache:"no-store",
+       signal:controller.signal
      });
      if(!response.ok){
        const body = await response.text();
@@ -211,12 +216,15 @@ footer{max-width:1180px;margin:auto;padding:0 18px 28px;color:var(--muted);font-
      status.style.borderColor = "#65d69a";
      status.style.color = "#65d69a";
    }catch(error){
-     const detail = String(error && error.message || error);
-     status.textContent = detail.startsWith("HTTP ") ? "DB接続失敗: " + detail : "DB接続失敗: 通信エラー";
+     const timedOut = error && error.name === "AbortError";
+     const detail = timedOut ? "10秒以内にSupabaseから応答がなかったよ" : String(error && error.message || error);
+     status.textContent = timedOut ? "DB接続タイムアウト" : detail.startsWith("HTTP ") ? "DB接続失敗: " + detail : "DB接続失敗: 通信エラー";
      status.title = detail;
      status.style.borderColor = "#ff7b7b";
      status.style.color = "#ff9b9b";
      console.error("Supabase connection check failed:",error);
+   }finally{
+     clearTimeout(timeout);
    }
  }
 
