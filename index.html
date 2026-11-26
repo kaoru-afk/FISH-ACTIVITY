@@ -694,8 +694,8 @@ function render(){
  const w=getWeather(scoreIdx), scoreTime=new Date(hourly.time[scoreIdx]);
  const names=getRegionFish();const marinePoint=getMarinePoint(scoreIdx);const evaluations=names.map(n=>({name:n,result:evaluateFish(w,marinePoint,scoreTime,n)}));const selectedEvaluation=target==="all"?null:evaluateFish(w,marinePoint,scoreTime,target);const validEvaluations=evaluations.filter(x=>Number.isFinite(x.result.environmentScore));const score=target==="all"?(validEvaluations.length?Math.round(validEvaluations.reduce((s,x)=>s+x.result.environmentScore,0)/validEvaluations.length):null):selectedEvaluation.environmentScore;
  const selectedDate=wx.daily.time[day].split("-").map(Number);const dateLabel=`${selectedDate[0]}年${selectedDate[1]}月${selectedDate[2]}日`;
- const targetLabel=target==="all"?"すべての魚種":target;
- $("score").innerHTML=(score===null?"--":score)+'<small> / 100</small>';$("grade").textContent=score===null?"判定材料不足":grade(score);$("summary").textContent=`${spot.name}・${dateLabel}の${targetLabel}向け暫定環境指標。取得できた要因だけで計算し、釣果確率ではないよ。`;
+ 
+ $("score").innerHTML=(score===null?"--":score)+'<small> / 100</small>';$("grade").textContent=score===null?"判定材料不足":grade(score);$("summary").textContent=`${spot.name}・${dateLabel}の環境適合度。魚種別活動期待度とは別の指標で、釣果確率ではないよ。`;
  $("wind").textContent=fmt(w.wind_speed_10m,1)+" m/s";$("temp").textContent=fmt(w.temperature_2m,1)+" ℃";$("pressure").textContent=fmt(w.surface_pressure,0)+" hPa";$("rain").textContent=fmt(w.precipitation,1)+" mm";
  const reasons=[["風",Number.isFinite(w.wind_speed_10m)?(w.wind_speed_10m<=7?"比較的穏やか":w.wind_speed_10m<=10?"やや強め":"強風に注意"):"データなし"],["降水",Number.isFinite(w.precipitation)?(w.precipitation<0.2?"少ない":"雨に注意"):"データなし"],["気温",Number.isFinite(w.temperature_2m)?w.temperature_2m+" ℃":"データなし"],["評価",grade(score)]];
  setRows("reasons",reasons);setRows("factorRows",[["風速",reasons[0][1]],["降水量",reasons[1][1]],["気温",reasons[2][1]],["評価時刻",scoreTime.toLocaleTimeString("ja-JP",{hour:"2-digit",minute:"2-digit"})],["評価対象", "魚種に関係しない環境適合度"],["潮汐・潮流","釣り場別データ未取得"],["海水温",Number.isFinite(marinePoint.sea_surface_temperature)?fmt(marinePoint.sea_surface_temperature,1)+" ℃（モデル）":"未取得"]]);
