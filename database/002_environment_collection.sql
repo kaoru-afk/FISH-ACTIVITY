@@ -10,7 +10,7 @@ create table if not exists public.data_collection_targets (
   municipality text not null,
   area_name text,
   location_name text not null,
-  spot_id uuid references public.fishing_spots(id) on delete set null,
+  spot_id uuid references public.fishing_spots(id) on delete cascade,
   latitude double precision not null check (latitude between -90 and 90),
   longitude double precision not null check (longitude between -180 and 180),
   coordinate_precision text not null default 'approximate'
